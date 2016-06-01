@@ -1,0 +1,9 @@
+{
+"shell-version": ["3.6", "3.8", "3.9","3.10","3.12","3.14","3.16","3.18"]
+,"uuid": "ShellTile@emasab.it"
+,"name": "ShellTile"
+,"description": "A tiling window extension for GNOME Shell. Just move a window over another one, holding down the Control key, and you'll see the magic! Grouped windows minimize, resize, raise and change workspace together. Maximize a window to remove it from the group."
+,"url": "https://bitbucket.org/emasab/shelltile"
+,"settings-schema": "org.gnome.shell.extensions.shelltile"
+,"gettext-domain": "shelltile"
+}
