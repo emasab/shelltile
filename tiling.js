@@ -1083,7 +1083,7 @@ const DefaultTilingStrategy = function(ext){
 		var cursor_rect = this.get_cursor_rect();
 		var monitor = global.screen.get_current_monitor();
 		var monitor_geometry = global.screen.get_monitor_geometry(monitor);
-		var maxi = win.get_maximized_bounds();
+		var maxi = win.get_maximized_bounds(cursor_rect.x,cursor_rect.y);
 		var ret = null;
 		var edge_zone_width = DefaultTilingStrategy.EDGE_ZONE_WIDTH;
 		

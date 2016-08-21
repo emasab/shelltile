@@ -213,8 +213,10 @@ Window.prototype = {
 		return this.meta_window.get_compositor_private();
 	}
 
-	,get_maximized_bounds: function(){
-		var monitor = global.screen.get_current_monitor();
+	,get_maximized_bounds: function(x,y){
+		if(x===undefined) x = this.xpos();
+		if(y===undefined) y = this.ypos();
+		var monitor = global.gdk_screen.get_monitor_at_point(x,y);
 		var ret = global.gdk_screen.get_monitor_workarea(monitor);
 		return new Meta.Rectangle({ x: ret.x, y: ret.y, width: ret.width, height: ret.height});
 	}
