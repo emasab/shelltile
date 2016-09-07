@@ -9,3 +9,7 @@ A tiling window extension for GNOME Shell. Just move a window over another one, 
 ### Example of classic edge resizing (CTRL not needed)
 
 ![tiling windows](/README/img/edge_tiling.gif)
+
+### Example of how windows stay grouped
+
+![tiling windows](/README/img/coordinated_actions.gif)
