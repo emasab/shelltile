@@ -36,7 +36,7 @@ const Ext = function Ext(){
 		if (!owner.hasOwnProperty('_bound_signals')) {
 			owner._bound_signals = [];
 		}
-		owner._bound_signals.push([subject, name, realsubject.connect(name, cb)]);
+		owner._bound_signals.push([subject, name, realsubject.connect(name, cb), realsubject]);
 	};
 	
 	self.get_topmost_groups = function(){
@@ -221,7 +221,7 @@ const Ext = function Ext(){
 		for(var i=0; i<owner._bound_signals.length; i++) {
 			var sig = owner._bound_signals[i];
 			if(object === undefined || sig[0] === object){
-				sig[0].disconnect(sig[2]);
+				sig[3].disconnect(sig[2]);
 			} else {
 				bound_signals1.push(sig);
 			}
