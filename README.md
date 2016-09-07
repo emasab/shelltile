@@ -5,8 +5,8 @@ A tiling window extension for GNOME Shell. Just move a window over another one, 
 ### Example of tiling windows (holding CTRL)
 
 
-![tiling windows](/README/img/window_tiling.png)
+![tiling windows](/README/img/window_tiling.gif)
 
 ### Example of classic edge resizing (CTRL not needed)
 
-![tiling windows](/README/img/edge_tiling.png)
+![tiling windows](/README/img/edge_tiling.gif)
