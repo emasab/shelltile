@@ -660,8 +660,8 @@ const DefaultTilingStrategy = function(ext){
 				var me = this;
 				var remaining = this.lastTime + 200 - currTime + 10;
 				
-				me.__timeout = Mainloop.timeout_add(remaining, function(){
-					
+				me.__timeout = true;
+				Mainloop.timeout_add(remaining, function(){
 					me.on_window_move(win);
 					delete me.__timeout;
 					

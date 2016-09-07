@@ -31,11 +31,12 @@ const Ext = function Ext(){
 	
 	self._shellwm =  global.window_manager;
 	
-	self.connect_and_track = function(owner, subject, name, cb) {
+	self.connect_and_track = function(owner, subject, name, cb, realsubject) {
+		if(!realsubject) realsubject = subject;
 		if (!owner.hasOwnProperty('_bound_signals')) {
 			owner._bound_signals = [];
 		}
-		owner._bound_signals.push([subject, name, subject.connect(name, cb)]);
+		owner._bound_signals.push([subject, name, realsubject.connect(name, cb)]);
 	};
 	
 	self.get_topmost_groups = function(){
@@ -468,47 +469,38 @@ const Ext = function Ext(){
 	}	
 	
 	self.bind_to_window_change = function(win, actor){
-		return Lang.bind(this, function(event_name, relevant_grabs, cb, cb_final) {
-	
-			let change_pending = false;
-			
-			let signal_handler_idle = Lang.bind(this, function() {
-				let grab_op = global.screen.get_display().get_grab_op();
-	
-				if(relevant_grabs.indexOf(grab_op) == -1) {
-	
-					if(grab_op == Meta.GrabOp.NONE && change_pending) {
-						change_pending = false;
-						if(cb_final) cb_final(win);
+
+		return Lang.bind(this, function(relevant_grabs, cb, cb_final) {
+			var win_id = win.id();
+			var stopped = false;
+			var grab_begin = function(display, screen, window, grab_op){
+				if(relevant_grabs.indexOf(grab_op) == -1) return;
+				if(win_id != Window.get_id(window)) return;
+				
+				var repeat = function(){
+					if(!stopped){
+						if(cb) cb(win);
+						Mainloop.timeout_add(200, repeat);
 					}
-	
-				} else {
-					// try again
-					Mainloop.idle_add(signal_handler_idle);
-				}				
-				return false;
-			});
-			
-			let signal_handler_changed = Lang.bind(this, function() {
-				let grab_op = global.screen.get_display().get_grab_op();
-				if(!this._automatic_change && relevant_grabs.indexOf(grab_op) != -1) {
-	
-					if(cb) cb(win);
-					if(!change_pending){
-						Mainloop.idle_add(signal_handler_idle);
-					}
-					change_pending = true;
-	
-				}
-				return false;
-			});
-			try {
-				// from 3.12 up
-				this.connect_and_track(this, actor, event_name + '-changed', signal_handler_changed);
-			} catch(e){
-				this.connect_and_track(this, actor.get_meta_window(), event_name + '-changed', signal_handler_changed);
+				};
+				Mainloop.timeout_add(200, repeat);
+				
+				stopped = false;
+				if(cb) cb(win);
 			}
+			var grab_end = function(display, screen, window, grab_op){
+				if(relevant_grabs.indexOf(grab_op) == -1) return;
+				if(win_id != Window.get_id(window)) return;
+				
+				if(cb_final) cb_final(win);
+				stopped = true;
+			}
+			
+
+			this.connect_and_track(this, win, 'grab-op-begin', Lang.bind(this, grab_begin), global.display);
+			this.connect_and_track(this, win, 'grab-op-end', Lang.bind(this, grab_end), global.display);
 		});
+		
 	}	
 	
 	self.disconnect_window = function(win){
@@ -554,8 +546,8 @@ const Ext = function Ext(){
 		var on_key_release = this.on_key_release;
 		
 		
-		bind_to_window_change('position', move_ops, Lang.bind(this, on_window_move),  Lang.bind(this, on_window_moved));
-		bind_to_window_change('size',     resize_ops, Lang.bind(this, on_window_resize), Lang.bind(this, on_window_resized));
+		bind_to_window_change(move_ops, Lang.bind(this, on_window_move),  Lang.bind(this, on_window_moved));
+		bind_to_window_change(resize_ops, Lang.bind(this, on_window_resize), Lang.bind(this, on_window_resized));
 		//this.connect_and_track(this, meta_window, 'drag-begin', Lang.bind(this, on_window_drag_begin));
 		//this.connect_and_track(this, meta_window, 'drag-end', Lang.bind(this, on_window_drag_end));
 		this.connect_and_track(this, meta_window, 'raised', Lang.bind(this, on_window_raised));
