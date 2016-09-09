@@ -606,7 +606,7 @@ const DefaultTilingStrategy = function(ext){
 	
 	this.on_window_move = function(win){
 		//if(!win._dragging) return;
-		win.unmaximize();
+		//win.unmaximize();
 		win.raise();
 
 		var currTime = new Date().getTime();
