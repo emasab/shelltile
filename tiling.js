@@ -611,7 +611,7 @@ const DefaultTilingStrategy = function(ext){
 
 		var currTime = new Date().getTime();
 		if(!this.lastTime || (currTime - this.lastTime) > 200){
-			
+
 			if(!win.group){ 
 			
 				this.lastTime = currTime;
@@ -656,14 +656,12 @@ const DefaultTilingStrategy = function(ext){
 		} else {
 			
 			if(!this.__timeout){
-				
 				var me = this;
 				var remaining = this.lastTime + 200 - currTime + 10;
 				
-				me.__timeout = true;
-				Mainloop.timeout_add(remaining, function(){
-					me.on_window_move(win);
+				me.__timeout = Mainloop.timeout_add(remaining, function(){
 					delete me.__timeout;
+					me.on_window_move(win);
 					
 				});
 				
