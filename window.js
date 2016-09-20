@@ -127,6 +127,8 @@ Window.prototype = {
 	,move_resize: function(x, y, w, h) {
 		this.meta_window.move_resize_frame(true, x, y, w, h);
 		if(this.is_maximized()){
+			if(!this.saved_position) this.saved_position = {};
+			if(!this.saved_size) this.saved_size = {};
 			this.saved_position.x = x;
 			this.saved_position.y = y;
 			this.saved_size.width = w;

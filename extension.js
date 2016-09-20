@@ -478,6 +478,11 @@ const Ext = function Ext(){
 				if(win_id != Window.get_id(window)) return;
 				
 				var repeat = function(){
+					grab_op = display.get_grab_op();
+					if(relevant_grabs.indexOf(grab_op) == -1){
+						if(cb_final) cb_final(win);
+						stopped = true;
+					}
 					if(!stopped){
 						if(cb) cb(win);
 						Mainloop.timeout_add(200, repeat);
@@ -489,6 +494,7 @@ const Ext = function Ext(){
 				if(cb) cb(win);
 			}
 			var grab_end = function(display, screen, window, grab_op){
+				if(stopped) return;
 				if(relevant_grabs.indexOf(grab_op) == -1) return;
 				if(win_id != Window.get_id(window)) return;
 				
