@@ -219,7 +219,12 @@ Window.prototype = {
 		if(x===undefined) x = this.xpos();
 		if(y===undefined) y = this.ypos();
 		var monitor = global.gdk_screen.get_monitor_at_point(x,y);
-		var ret = global.gdk_screen.get_monitor_workarea(monitor);
+		if(Main.layoutManager && Main.layoutManager.getWorkAreaForMonitor) var ret =  Main.layoutManager.getWorkAreaForMonitor(monitor);
+		else {
+			// < 3.8
+			var ret = global.gdk_screen.get_monitor_workarea(monitor);
+		}
+		
 		return new Meta.Rectangle({ x: ret.x, y: ret.y, width: ret.width, height: ret.height});
 	}
 	
