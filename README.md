@@ -13,3 +13,8 @@ A tiling window extension for GNOME Shell. Just move a window over another one, 
 ### Example of how windows stay grouped
 
 ![tiling windows](/README/img/coordinated_actions.gif)
+
+### Tutorial video
+
+https://www.youtube.com/watch?v=xX9HUBFj5XE
+thanks to WOGUE
