@@ -1009,8 +1009,7 @@ const DefaultTilingStrategy = function(ext){
 	}
 
 	this.get_cursor_monitor = function(){
-		let [mouseX, mouseY] = global.get_pointer();
-		return global.gdk_screen.get_monitor_at_point(mouseX, mouseY);
+		return Main.layoutManager.currentMonitor.index;
 	}
 	
 	this.get_window_under = function(win){

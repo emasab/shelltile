@@ -218,7 +218,8 @@ Window.prototype = {
 	,get_maximized_bounds: function(x,y){
 		if(x===undefined) x = this.xpos();
 		if(y===undefined) y = this.ypos();
-		var monitor = global.gdk_screen.get_monitor_at_point(x,y);
+
+		var monitor = Main.layoutManager.findMonitorForActor(this.get_actor()).index;
 		if(Main.layoutManager && Main.layoutManager.getWorkAreaForMonitor) var ret =  Main.layoutManager.getWorkAreaForMonitor(monitor);
 		else {
 			// < 3.8
