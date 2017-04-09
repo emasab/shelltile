@@ -7,7 +7,11 @@
         <summary>Keep the window group maximized</summary>
         <description>Enforce the group to take all the available space</description>
     </key>  
-    
+     <key type="b" name="mouse-split-percent">
+        <default>false</default>
+        <summary>Adjust the split percentage with the mouse while tiling</summary>
+        <description>Adjust the split percentage with the mouse while tiling</description>
+    </key>   
     <key type="i" name="gap-between-windows">
       <default>10</default>
       <summary>Size of the gaps between the windows</summary>

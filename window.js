@@ -175,7 +175,7 @@ Window.prototype = {
 	}
 	,can_be_tiled: function() {
 		if(this.meta_window.is_skip_taskbar()) {
-			if(this.log.is_debug()) this.log.debug("uninteresting window: " + this);
+			//if(this.log.is_debug()) this.log.debug("uninteresting window: " + this);
 			return false;
 		}
 		var window_class = this.window_class();

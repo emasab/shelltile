@@ -20,7 +20,10 @@ function init() {
     			 type: "b",
     			 label: _("Keep the window group maximized")
     		},
-    		
+    		"mouse-split-percent": {
+	   			 type: "b",
+	   			 label: _("Adjust the split percentage with the mouse while tiling")
+	   		},    		
     		"gap-between-windows": {
 	   			 type: "i",
 	   			 label: _("Size of the gaps between the windows"),
@@ -73,7 +76,7 @@ function createBoolSetting(settings, setting) {
                             margin_top: 5});
 
     let setting_label = new Gtk.Label({label: settingsV.label,
-                                       xalign: 0 });
+                                       xalign: 0, hexpand: true, margin_right: 20 });
 
     let setting_switch = new Gtk.Switch({active: gsettings.get_boolean(settingsId)});
     setting_switch.connect('notify::active', function(button) {
@@ -100,7 +103,7 @@ function createIntSetting(settings, setting) {
                             margin_top: 5});
 
     let setting_label = new Gtk.Label({label: settingsV.label,
-                                       xalign: 0 });
+                                       xalign: 0 , hexpand: true, margin_right: 20 });
 
     let adjustment = new Gtk.Adjustment({ lower: settingsV.min || 0,
                                           upper: settingsV.max || 65535,

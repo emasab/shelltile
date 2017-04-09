@@ -9,6 +9,7 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Extension = ExtensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 const Window = Extension.imports.window.Window;
+const Gdk = imports.gi.Gdk
 
 const WindowGroup = function(first, second, type, splitPercent){
 	
@@ -525,8 +526,9 @@ const WindowGroup = function(first, second, type, splitPercent){
 		delete this.second;
 	}
 	
-	this.preview_rect = function(win){
+	this.preview_rect = function(win, cursor_rect){
 		var preview = [[0,0,1,0.5], [0.5,0,0.5,1], [0,0.5,1,0.5], [0,0,0.5,1]]
+		var perc = this.splitPercent;
 		
 		if(win === this.first){
 			var corner = this.type == WindowGroup.VERTICAL_GROUP ? 0 : 3;
@@ -537,7 +539,11 @@ const WindowGroup = function(first, second, type, splitPercent){
 			var win_rect = this.first.outer_rect();
 		}
 		
-		var currentpreview = preview[corner];
+		var currentpreview = preview[corner].slice();
+		if(corner==0){ currentpreview[3]=perc; }
+		else if(corner==1){ currentpreview[0] = perc; currentpreview[2]=1-perc; }
+		else if(corner==2){ currentpreview[1] = perc; currentpreview[3]=1-perc; }
+		else if(corner==3){ currentpreview[2] = perc; }
 		
 		var preview_x = win_rect.x + currentpreview[0] * win_rect.width;
 		var preview_y = win_rect.y + currentpreview[1] * win_rect.height;
@@ -559,7 +565,16 @@ const WindowGroup = function(first, second, type, splitPercent){
 }
 WindowGroup.HORIZONTAL_GROUP = "horizontal";
 WindowGroup.VERTICAL_GROUP = "vertical";
-
+WindowGroup.calc_split_percent = function(win_rect, cursor_rect, corner, type, num, tot, log){
+	if(corner==0) var percwidth = cursor_rect.y-(win_rect.y + num/tot*0.5*win_rect.height);
+	else if(corner==1) var percwidth = cursor_rect.x-(win_rect.x+0.5*win_rect.width+(tot-num-1)/tot*0.5*win_rect.width);
+	else if(corner==2) var percwidth = cursor_rect.y-(win_rect.y+0.5*win_rect.height+(tot-num-1)/tot*0.5*win_rect.height);
+	else if(corner==3) var percwidth = cursor_rect.x-(win_rect.x + num/tot*0.5*win_rect.width);
+	var perc =  type == WindowGroup.VERTICAL_GROUP ? percwidth/win_rect.height*2*tot : percwidth/win_rect.width*2*tot;
+	if(perc>0.999) perc = 0.999;
+	if(perc<0.001) perc = 0.001;
+	return perc;
+}
 
 
 const DefaultTilingStrategy = function(ext){
@@ -575,10 +590,13 @@ const DefaultTilingStrategy = function(ext){
 	this.preview_for_edge_tiling = false;
 	this.preview.visible = false;
 	Main.uiGroup.add_actor(this.preview);
+	var default_modifier = Gdk.Keymap.get_default();
+	
+	var modifiers = Clutter.ModifierType.CONTROL_MASK | Clutter.ModifierType.MOD4_MASK;
 	
 	this.is_ctrl_pressed = function(){
-		let [x, y, mods] = global.get_pointer();
-		var ret = mods & Clutter.ModifierType.CONTROL_MASK;
+		var ret = default_modifier.get_modifier_state() & modifiers;
+		
 		if(ret){
 			this.lastTimeCtrlPressed = new Date().getTime();
 		} else {
@@ -610,7 +628,8 @@ const DefaultTilingStrategy = function(ext){
 		win.raise();
 
 		var currTime = new Date().getTime();
-		if(!this.lastTime || (currTime - this.lastTime) > 200){
+		var interval = 200
+		if(!this.lastTime || (currTime - this.lastTime) > interval){
 
 			if(!win.group){ 
 			
@@ -625,7 +644,7 @@ const DefaultTilingStrategy = function(ext){
 						
 						var groupPreview = this.get_window_group_preview(window_under, win);
 						if(groupPreview){
-							var preview_rect = groupPreview.preview_rect(win);
+							var preview_rect = groupPreview.preview_rect(win,this.get_cursor_rect());
 							groupPreview.first = null;
 							groupPreview.second = null;
 							//if(this.log.is_debug()) this.log.debug("preview_rect: " + preview_rect);
@@ -657,7 +676,7 @@ const DefaultTilingStrategy = function(ext){
 			
 			if(!this.__timeout){
 				var me = this;
-				var remaining = this.lastTime + 200 - currTime + 10;
+				var remaining = this.lastTime + interval - currTime + 10;
 				
 				me.__timeout = Mainloop.timeout_add(remaining, function(){
 					delete me.__timeout;
@@ -720,6 +739,45 @@ const DefaultTilingStrategy = function(ext){
 		}
 		this.update_preview(null);
 
+	}
+	
+	this.on_accelerator = function(accel){
+		var meta_window = global.display.focus_window;
+		if(!meta_window) return;
+		
+		var me = this;
+		var hasLastCode = !!me.lastCode;
+		var win = this.extension.get_window(meta_window, true);
+		var preview_rect = this.get_edge_preview(win, accel);
+		
+		var apply = function(preview_rect){
+			if(preview_rect.maximize) win.maximize();
+			else {
+				win.unmaximize();
+				win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);			
+			}
+		}
+		
+		if(preview_rect){
+			
+			if(!me.__accelerator_timeout){
+				
+				me.__accelerator_timeout = Mainloop.timeout_add(DefaultTilingStrategy.ACCELERATOR_TIMEOUT+10, function(){
+					if(!me.__accelerator_timeout) return;
+					apply(preview_rect);
+					Mainloop.source_remove(me.__accelerator_timeout);
+					delete me.__accelerator_timeout;
+				});			
+				
+			} else if(hasLastCode){
+				
+				Mainloop.source_remove(me.__accelerator_timeout);
+				delete me.__accelerator_timeout;
+				apply(preview_rect);
+				
+			}
+			
+		}
 	}
 	
 	this.update_preview = function(preview_rect){
@@ -967,7 +1025,12 @@ const DefaultTilingStrategy = function(ext){
 		}
 		
 		var cursor_rect = this.get_cursor_rect();
+		var current_corner = null;
+		var current_nums = 0;
+		var current_tot = 2;
+		
 
+		var me = this;
 		var get_current_cursor_rect = function(){
 			
 			for(var i=0; i<corner_rects.length; i++){
@@ -975,13 +1038,17 @@ const DefaultTilingStrategy = function(ext){
 				var current_corner_rects = corner_rects[i];
 				for(var j=0; j<current_corner_rects.length; j++){
 					var current_corner_rect = current_corner_rects[j];
+					current_tot = current_corner_rects.length;
 					if(current_corner_rect[0].contains_rect(cursor_rect)){
+						current_corner = i;
+						current_nums = current_corner_rects.length-j-1;
 						return current_corner_rect;
 					}
 				}
 			}
 			return null;
 		}
+		
 
 		var current_cursor_rect = get_current_cursor_rect();
 		if(!current_cursor_rect) return null;
@@ -991,7 +1058,12 @@ const DefaultTilingStrategy = function(ext){
 			
 			var vars = {"above": above, "below": win, "h": WindowGroup.HORIZONTAL_GROUP, "v": WindowGroup.VERTICAL_GROUP};
 			
-			var ret = new WindowGroup(vars[group[0]], vars[group[1]], vars[group[2]]);
+			if(this.extension.mouse_split_percent){
+				var perc = WindowGroup.calc_split_percent(below.outer_rect(), cursor_rect, current_corner, vars[group[2]], current_nums, current_tot, me.log);
+			} else {
+				var perc = 0.5;
+			}
+			var ret = new WindowGroup(vars[group[0]], vars[group[1]], vars[group[2]], perc);
 			ret.extension = this.extension;
 			return ret;
 		}
@@ -1075,7 +1147,7 @@ const DefaultTilingStrategy = function(ext){
 		
 	}
 	
-	this.get_edge_preview = function(win){
+	this.get_edge_preview = function(win, code){
 		var main_panel_rect = this.get_main_panel_rect();
 		var cursor_rect = this.get_cursor_rect();
 		var monitor = global.screen.get_current_monitor();
@@ -1089,25 +1161,66 @@ const DefaultTilingStrategy = function(ext){
 		var left_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y, width: edge_zone_width, height: monitor_geometry.height});
 		var right_zone = new Meta.Rectangle({ x: monitor_geometry.x + monitor_geometry.width - edge_zone_width, y: monitor_geometry.y, width: edge_zone_width, height: monitor_geometry.height});
 		
-		var is_top = top_zone.contains_rect(cursor_rect);
-		var is_bottom = bottom_zone.contains_rect(cursor_rect);
-		var is_left = left_zone.contains_rect(cursor_rect);
-		var is_right = right_zone.contains_rect(cursor_rect);
+		if(code){
+			var percent = 0.5;
+			var is_top = code=="up"
+			var is_bottom = code=="down"
+			var is_left = code=="left"
+			var is_right = code=="right"
+			var now = new Date().getTime();
+			if(this.lastCodeTime && (now-this.lastCodeTime)<DefaultTilingStrategy.ACCELERATOR_TIMEOUT){
+				if(this.lastCode=="up"){
+					if(is_top) percent = 0.3;
+					else if(is_left) percent = 0;
+					else if(is_right) percent = 1;
+					if(!is_bottom) is_top = true;
+				}
+				if(this.lastCode=="down"){
+					if(is_left) percent = 0;
+					else if(is_right) percent = 1;
+					if(!is_top) is_bottom = true;
+				}
+				if(this.lastCode=="left"){
+					if(is_top) percent = 0;
+					else if(is_bottom) percent = 0;
+					if(!is_right) is_left = true;
+				}
+				if(this.lastCode=="right"){
+					if(is_top) percent = 1;
+					else if(is_bottom) percent = 1;
+					if(!is_left) is_right = true;
+				}
+				
+				delete this.lastCodeTime;
+				delete this.lastCode;
+			} else {
+				this.lastCodeTime = now
+				this.lastCode = code;
+			}
+				
+		} else {
+			var is_top = top_zone.contains_rect(cursor_rect);
+			var is_bottom = bottom_zone.contains_rect(cursor_rect);
+			var is_left = left_zone.contains_rect(cursor_rect);
+			var is_right = right_zone.contains_rect(cursor_rect);
+		}
 		var is_top_or_bottom = is_top || is_bottom;
 		var is_left_or_right = is_left || is_right;
 		
-		var percent = null;
-		if(is_top_or_bottom){
-			
-			var percent = (cursor_rect.x - monitor_geometry.x) / monitor_geometry.width;
-			
-		} else if(is_left_or_right){
-			
-			var percent = (cursor_rect.y - monitor_geometry.y) / monitor_geometry.height;			
-			
+		if(!code){
+			var percent = null;
+			if(is_top_or_bottom){
+				
+				var percent = (cursor_rect.x - monitor_geometry.x) / monitor_geometry.width;
+				
+			} else if(is_left_or_right){
+				
+				var percent = (cursor_rect.y - monitor_geometry.y) / monitor_geometry.height;			
+				
+			}
 		}
 		
-		if(percent){
+		if(percent!=null){
 			
 			ret = maxi;
 			var half_perc = Math.abs(percent - 0.5);
@@ -1195,5 +1308,6 @@ const DefaultTilingStrategy = function(ext){
 };
 
 DefaultTilingStrategy.EDGE_ZONE_WIDTH = 20;
+DefaultTilingStrategy.ACCELERATOR_TIMEOUT = 300;
 
 

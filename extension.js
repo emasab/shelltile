@@ -13,15 +13,20 @@ const OverviewModifier = Extension.imports.overview.OverviewModifier;
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 const Convenience = Extension.imports.convenience;
 const Util = Extension.imports.util;
+const KeyManager = Extension.imports.keymanager.KeyManager;
 
 const Ext = function Ext(){
 	let self = this;
 	let OVERRIDE_SCHEMA = "org.gnome.shell.overrides";
+	let KEYBINDING_SCHEMA = "org.gnome.desktop.wm.keybindings";
+	let KEYBINDING_SCHEMA_MUTTER = "org.gnome.mutter.keybindings";
 	
     self.log = Log.getLogger("Ext");
     
     self.gnome_settings = Convenience.getSettings(OVERRIDE_SCHEMA);	
     self.settings = Convenience.getSettings();
+    self.keybindingSettings = Convenience.getSettings(KEYBINDING_SCHEMA);
+    self.keybindingSettingsMutter = Convenience.getSettings(KEYBINDING_SCHEMA_MUTTER);
     
     self.enabled = false;
 	
@@ -97,6 +102,7 @@ const Ext = function Ext(){
 		
 		let last_keep_maximized = self.keep_maximized;
 		self.keep_maximized = self.settings.get_boolean("keep-group-maximized");
+		self.mouse_split_percent = self.settings.get_boolean("mouse-split-percent");
 		
 		let gap = self.settings.get_int("gap-between-windows");
 		//if(this.log.is_debug()) this.log.debug("gap: " + gap + " " + self.strategy.DIVISION_SIZE);
@@ -228,6 +234,17 @@ const Ext = function Ext(){
 		}
 		owner._bound_signals = bound_signals1;
 	};
+	
+	self.remove_default_keybindings = function(){
+        var edge_tiling = self.gnome_settings.get_boolean("edge-tiling");
+        if(edge_tiling === true){
+        	self.gnome_settings.set_boolean("edge-tiling", false);
+        }
+        self.keybindingSettings.set_strv("maximize",[]);
+        self.keybindingSettings.set_strv("unmaximize",[]);
+        self.keybindingSettingsMutter.set_strv("toggle-tiled-left",[]);
+        self.keybindingSettingsMutter.set_strv("toggle-tiled-right",[]);
+	}
 
 	self.enable = function(){
 	    try {
@@ -236,12 +253,8 @@ const Ext = function Ext(){
             self.enabled = true;
             self.screen = global.screen;
             let screen = self.screen;
-
-            var edge_tiling = self.gnome_settings.get_boolean("edge-tiling");
-            if(edge_tiling === true){
-            	self.gnome_settings.set_boolean("edge-tiling", false);
-            }
             
+            self.remove_default_keybindings();
             self.load_settings();
             
             if(!self.initialized){
@@ -256,6 +269,8 @@ const Ext = function Ext(){
 	    		var on_window_entered_monitor = this.break_loops(this.window_entered_monitor);
 	
 	            self.connect_and_track(self, self.gnome_settings, 'changed', Lang.bind(this, this.on_settings_changed));
+	            self.connect_and_track(self, self.keybindingSettings, 'changed', Lang.bind(this, this.on_settings_changed));
+	            self.connect_and_track(self, self.keybindingSettingsMutter, 'changed', Lang.bind(this, this.on_settings_changed));
 	            self.connect_and_track(self, self.settings, 'changed', Lang.bind(this, this.on_settings_changed));
 	    		self.connect_and_track(self, self.screen, 'window-entered-monitor', Lang.bind(this, on_window_entered_monitor));
 	    		self.connect_and_track(self, global.display, 'window_created', Lang.bind(this, on_window_create));
@@ -268,7 +283,25 @@ const Ext = function Ext(){
 	    			self.connect_and_track(self, self._shellwm, 'unmaximize', Lang.bind(self, on_window_unmaximize));
 	    			self.connect_and_track(self, self._shellwm, 'minimize', Lang.bind(self, on_window_minimize));
 	    		}
-	
+	    		
+	    		
+	    		
+	    		self.keyManager = new KeyManager()
+	    		
+	    		var addAccelerator = function(acc, id){
+	    			self.keyManager.listenFor(acc, function(){
+		    			self.on_accelerator(id);
+		    		})
+	    		}
+	    		addAccelerator("<super>j","left");
+	    		addAccelerator("<super>l","right");
+	    		addAccelerator("<super>i","up");
+	    		addAccelerator("<super>k","down");
+	    		addAccelerator("<super>Left","left");
+	    		addAccelerator("<super>Right","right");
+	    		addAccelerator("<super>Up","up");
+	    		addAccelerator("<super>Down","down");
+	    		
 	            OverviewModifier.register(self);
             }
             //if(self.log.is_debug()) self.log.debug("ShellTile enabled");
@@ -276,6 +309,11 @@ const Ext = function Ext(){
 	    } catch(e){
             if(self.log.is_error()) self.log.error(e);    
         }
+	}
+	
+	self.on_accelerator = function(accel){
+		if(!this.enabled) return;
+		if(this.strategy && this.strategy.on_accelerator) this.strategy.on_accelerator(accel);
 	}
 	
 	self.on_window_create = function(display, meta_window, second_try){
@@ -329,14 +367,12 @@ const Ext = function Ext(){
 	}
 	
 	self.on_settings_changed = function(){
-		if(!this.enabled) return;
+		if(!this.enabled || self.on_settings_changed.automatic) return;
 		
-		var edge_tiling = self.gnome_settings.get_boolean("edge-tiling");
-		if(edge_tiling && self.enabled){
-			self.gnome_settings.set_boolean("edge-tiling", false);
-		}
-		
+		self.on_settings_changed.automatic = true;
+		self.remove_default_keybindings();
 		self.load_settings();
+		delete self.on_settings_changed.automatic;
 	}
 	
 	self.on_window_size_change = function(shellwm, actor) {
@@ -564,8 +600,11 @@ const Ext = function Ext(){
 	self.disable = function(){
         try {        
             self.enabled = false;
-            self.gnome_settings.set_boolean("edge-tiling", true);
-		    
+            self.gnome_settings.reset("edge-tiling");
+            self.keybindingSettings.reset("maximize");
+            self.keybindingSettings.reset("unmaximize");
+            self.keybindingSettingsMutter.reset("toggle-tiled-left");
+            self.keybindingSettingsMutter.reset("toggle-tiled-right");
             //if(self.log.is_debug()) self.log.debug("ShellTile disabled");
 
         } catch(e){
