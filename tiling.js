@@ -753,6 +753,7 @@ const DefaultTilingStrategy = function(ext){
 		var apply = function(preview_rect){
 			if(preview_rect.maximize) win.maximize();
 			else {
+				if(win.group) win.group.detach(win);
 				win.unmaximize();
 				win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);			
 			}
