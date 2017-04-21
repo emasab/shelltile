@@ -240,10 +240,10 @@ const Ext = function Ext(){
         if(edge_tiling === true){
         	self.gnome_settings.set_boolean("edge-tiling", false);
         }
-        self.keybindingSettings.set_strv("maximize",[]);
-        self.keybindingSettings.set_strv("unmaximize",[]);
-        self.keybindingSettingsMutter.set_strv("toggle-tiled-left",[]);
-        self.keybindingSettingsMutter.set_strv("toggle-tiled-right",[]);
+        self.keybindingSettings.reset("maximize");
+        self.keybindingSettings.reset("unmaximize");
+        self.keybindingSettingsMutter.reset("toggle-tiled-left");
+        self.keybindingSettingsMutter.reset("toggle-tiled-right");
 	}
 
 	self.enable = function(){
@@ -293,10 +293,10 @@ const Ext = function Ext(){
 		    			self.on_accelerator(id);
 		    		})
 	    		}
-	    		addAccelerator("<super>Left","left");
-	    		addAccelerator("<super>Right","right");
-	    		addAccelerator("<super>Up","up");
-	    		addAccelerator("<super>Down","down");
+	    		//addAccelerator("<super>Left","left");
+	    		//addAccelerator("<super>Right","right");
+	    		//addAccelerator("<super>Up","up");
+	    		//addAccelerator("<super>Down","down");
 	    		
 	            OverviewModifier.register(self);
             }
