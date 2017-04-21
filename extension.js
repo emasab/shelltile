@@ -293,10 +293,6 @@ const Ext = function Ext(){
 		    			self.on_accelerator(id);
 		    		})
 	    		}
-	    		addAccelerator("<super>j","left");
-	    		addAccelerator("<super>l","right");
-	    		addAccelerator("<super>i","up");
-	    		addAccelerator("<super>k","down");
 	    		addAccelerator("<super>Left","left");
 	    		addAccelerator("<super>Right","right");
 	    		addAccelerator("<super>Up","up");
