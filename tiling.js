@@ -621,6 +621,18 @@ const DefaultTilingStrategy = function(ext){
 		}
 		return ret;
 	}
+	
+	this.check_after_move = function(){
+		if(this._check_after_move){
+			if(this.log.is_debug()) this.log.debug("check after move");
+			for(var i=0;i<this._check_after_move.length;i++){
+				var c = this._check_after_move[i];
+				if(this.log.is_debug()) this.log.debug("check after move1");
+				if(!c.group) c.after_group();
+			}
+			delete this._check_after_move;
+		}
+	}
 
 	this.on_window_move = function(win){
 		//if(!win._dragging) return;
@@ -666,6 +678,8 @@ const DefaultTilingStrategy = function(ext){
 			} else if(win.group && this.is_ctrl_pressed()){
 
 				this.extension._automatic_change = true;
+				if(!this._check_after_move) this._check_after_move = [];
+				this._check_after_move = this._check_after_move.concat([win.group.first, win.group.second]);
 				win.group.detach(win);
 				win.raise();
 				delete this.extension._automatic_change;
@@ -719,7 +733,10 @@ const DefaultTilingStrategy = function(ext){
 			if(group_preview){
 
 				if(win.group) win.group.detach(win);
-				else win.before_group();
+				else {
+					win.before_group();
+					window_under.before_group();
+				}
 
 				var is_maximized = window_under.is_maximized();
 				window_under.unmaximize();
@@ -736,7 +753,7 @@ const DefaultTilingStrategy = function(ext){
 					if(preview_rect.maximize) win.maximize();
 					else win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);
 				} else {
-                    win.after_group();
+                    this.check_after_move();
                 }
 
 			}
@@ -894,7 +911,15 @@ const DefaultTilingStrategy = function(ext){
 
 			} else {
 
+				win.check_after = true;
+				var other = null;
+				if(!win.group.group){
+					var other = win === win.group.first ? win.group.second : win.group.first;
+				}
 				win.group.detach(win);
+				if(other){
+					other.after_group();
+				}
 				//if(this.extension.keep_maximized) win.maximize_size();
 
 			}
@@ -909,7 +934,10 @@ const DefaultTilingStrategy = function(ext){
 			topmost_group.unminimize(true);
 			topmost_group.reposition();
 		} else {
-            win.after_group(true);
+			if(win.check_after){
+				delete win.check_after;
+				win.after_group();
+			}
         }
 	}
 

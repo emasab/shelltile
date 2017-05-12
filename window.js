@@ -46,16 +46,22 @@ Window.prototype = {
 		if(!this.before_group_size) this.before_group_size = this.outer_rect();
 	}
 
-	,after_group: function(center){
+	,after_group: function(){
 		if(this.before_group_size){
             var bounds = this.get_maximized_bounds();
             if(bounds){
-                    var x = bounds.x + parseInt((bounds.width - this.before_group_size.width)/2);
-                    var y = bounds.y + parseInt((bounds.height - this.before_group_size.height)/2);
+            		this.unmaximize();
+            		var left = parseInt((bounds.width - this.before_group_size.width)/2);
+            		var top = parseInt((bounds.height - this.before_group_size.height)/2);
+            		left = parseInt(left * Math.random());
+            		top = parseInt(top * Math.random());
+            		
+                    var x = bounds.x + left;
+                    var y = bounds.y + top;
                     if(x<bounds.x) x = bounds.x;
                     if(y<bounds.y) y = bounds.y;
-			        this.move_resize(x, y, this.before_group_size.width, this.before_group_size.height);
-			        delete this.before_group_size;
+                    this.move_resize(x, y, this.before_group_size.width, this.before_group_size.height);
+                    delete this.before_group_size;
             }
 		}
 	}
