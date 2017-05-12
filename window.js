@@ -37,34 +37,49 @@ Window.prototype = {
 	,is_minimized: function() {
 		return this.meta_window.minimized;
 	}
-	
+
 	,is_maximized: function(){
-		return this.meta_window.maximized_horizontally || this.meta_window.maximized_vertically;	
+		return this.meta_window.maximized_horizontally || this.meta_window.maximized_vertically;
 	}
-	
+
+	,before_group: function(){
+		if(!this.before_group_size) this.before_group_size = this.outer_rect();
+	}
+
+	,after_group: function(center){
+		if(this.before_group_size){
+            var bounds = this.get_maximized_bounds();
+            if(bounds){
+                    var x = bounds.x + parseInt((bounds.width - this.before_group_size.width)/2);
+                    var y = bounds.y + parseInt((bounds.height - this.before_group_size.height)/2);
+                    if(x<bounds.x) x = bounds.x;
+                    if(y<bounds.y) y = bounds.y;
+			        this.move_resize(x, y, this.before_group_size.width, this.before_group_size.height);
+			        delete this.before_group_size;
+            }
+		}
+	}
+
 	,minimize: function() {
 		this.meta_window.minimize();
 	}
-	
+
 	,maximize: function(){
 		this.meta_window.maximize(Meta.MaximizeFlags.VERTICAL | Meta.MaximizeFlags.HORIZONTAL);
-		var maximized_bounds = this.outer_rect();
-		var monitor = this.get_monitor();
-		var works = this.get_workspace();
 	}
-	
+
 	,unmaximize: function(){
 		this.meta_window.unmaximize(Meta.MaximizeFlags.VERTICAL | Meta.MaximizeFlags.HORIZONTAL);
 	}
-	
+
 	,unminimize: function() {
 		this.meta_window.unminimize();
 	}
-	
+
 	,showing_on_its_workspace: function(){
 		return this.meta_window.showing_on_its_workspace();
 	}
-	
+
 	,before_redraw: function(func) {
 		//TODO: idle seems to be the only LaterType that reliably works; but
 		// it causes a visual flash. before_redraw would be better, but that
@@ -77,11 +92,11 @@ Window.prototype = {
 			null //notify
 		)
 	}
-	
+
 	,on_move_to_workspace: function(workspace) {
-		
+
 		delete this.marked_for_remove;
-		
+
 		if(this.group){
 			this.group.move_to_workspace(workspace);
 			var group = this.group.get_topmost_group();
@@ -89,41 +104,41 @@ Window.prototype = {
 				group.maximize_size();
 			}
 			group.raise();
-			group.save_bounds();			
+			group.save_bounds();
 		}
 	}
-	
+
 	,on_move_to_monitor: function(metaScreen, monitorIndex){
 		delete this.marked_for_remove;
 		if(this.group){
 			this.update_geometry(true,false);
 		}
 	}
-	
+
 	,save_bounds: function(){
 		this.save_position();
 		this.save_size();
 	}
-	
+
 	,save_position: function(){
 		this.saved_position = this.outer_rect();
 	}
-	
+
 	,save_size: function(){
 		this.saved_size = this.outer_rect();
 	}
-	
+
 	,move_to_workspace: function(workspace){
 		if(!workspace) return;
 		this.meta_window.change_workspace(workspace.meta_workspace);
 		delete this.marked_for_remove;
 	}
-	
+
 	,move_to_monitor: function(idx){
 		this.meta_window.move_to_monitor(idx);
 		delete this.marked_for_remove;
-	}	
-	
+	}
+
 	,move_resize: function(x, y, w, h) {
 		this.meta_window.move_resize_frame(true, x, y, w, h);
 		if(this.is_maximized()){
@@ -146,7 +161,7 @@ Window.prototype = {
 	,is_resizeable: function() {
 		return this.meta_window.resizeable;
 	}
-	
+
 	,window_type: function() {
 		try {
 			return this.meta_window['window-type'];
