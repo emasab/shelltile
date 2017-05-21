@@ -46,21 +46,22 @@ Window.prototype = {
 		if(!this.before_group_size) this.before_group_size = this.outer_rect();
 	}
 
-	,after_group: function(){
+	,after_group: function(keep_position){
 		if(this.before_group_size){
             var bounds = this.get_maximized_bounds();
             if(bounds){
             		this.unmaximize();
-            		var left = parseInt((bounds.width - this.before_group_size.width)/2);
-            		var top = parseInt((bounds.height - this.before_group_size.height)/2);
-            		left = parseInt(left * Math.random());
-            		top = parseInt(top * Math.random());
+            		var current = this.outer_rect();
+            		current.width = this.before_group_size.width;
+            		current.height = this.before_group_size.height;
+            		if(!keep_position && !bounds.contains_rect(current)){
+            			current.x = current.x - (current.x+current.width-bounds.x-bounds.width);
+            			current.y = current.y - (current.y+current.height-bounds.y-bounds.height);
+                		if(current.x<bounds.x) current.x = bounds.x;
+                		if(current.y<bounds.y) current.y = bounds.y;
+            		}
             		
-                    var x = bounds.x + left;
-                    var y = bounds.y + top;
-                    if(x<bounds.x) x = bounds.x;
-                    if(y<bounds.y) y = bounds.y;
-                    this.move_resize(x, y, this.before_group_size.width, this.before_group_size.height);
+                    this.move_resize(current.x, current.y, current.width, current.height);
                     delete this.before_group_size;
             }
 		}
