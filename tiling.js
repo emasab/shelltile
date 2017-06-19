@@ -592,9 +592,15 @@ const DefaultTilingStrategy = function(ext){
 	Main.uiGroup.add_actor(this.preview);
 	var default_modifier = Gdk.Keymap.get_default();
 
-	var modifiers = Clutter.ModifierType.CONTROL_MASK;
+	//var modifiers = Clutter.ModifierType.CONTROL_MASK;
 
 	this.is_ctrl_pressed = function(){
+  	//this.log.debug("Modifier key: " + this.extension.tile_modifier_key);
+    var modifiers = Clutter.ModifierType.CONTROL_MASK; // Default: Ctrl only
+    if (this.extension.tile_modifier_key === 'Super')
+      modifiers = Clutter.ModifierType.MOD4_MASK;
+    if (this.extension.tile_modifier_key === 'Ctrl or Super')
+      modifiers = modifiers | Clutter.ModifierType.MOD4_MASK;
 		var ret = default_modifier.get_modifier_state() & modifiers;
 
 		if(ret){
@@ -621,7 +627,7 @@ const DefaultTilingStrategy = function(ext){
 		}
 		return ret;
 	}
-	
+
 	this.check_after_move = function(moving){
 		if(this._check_after_move){
 			//if(this.log.is_debug()) this.log.debug("check after move");
@@ -933,7 +939,7 @@ const DefaultTilingStrategy = function(ext){
 			}
         }
 	}
-	
+
 	this.detach_window = function(win){
 		if(win.group){
 			var other = null;
