@@ -16,7 +16,12 @@
       <default>10</default>
       <summary>Size of the gaps between the windows</summary>
       <description>You can reduce the default size of the gaps between the windows</description>
-    </key>    
+    </key>
     
+    <key type="s" name="tile-modifier-key">
+      <default>"Ctrl"</default>
+      <summary>Key to hold for tiling</summary>
+      <description>You can change this modifier key to suit your needs.</description>
+    </key>
   </schema>
 </schemalist>
