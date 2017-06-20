@@ -592,7 +592,7 @@ const DefaultTilingStrategy = function(ext){
 	Main.uiGroup.add_actor(this.preview);
 	var default_modifier = Gdk.Keymap.get_default();
 
-	var modifiers = Clutter.ModifierType.CONTROL_MASK | Clutter.ModifierType.MOD4_MASK;
+	var modifiers = Clutter.ModifierType.CONTROL_MASK;
 
 	this.is_ctrl_pressed = function(){
 		var ret = default_modifier.get_modifier_state() & modifiers;
