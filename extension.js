@@ -117,6 +117,11 @@ const Ext = function Ext(){
 			self.maximize_grouped_windows();			
 		}
 		
+		let mod = self.settings.get_string("tile-modifier-key");
+		if (mod === undefined)
+		  mod = "Ctrl";
+		
+		self.tile_modifier_key = mod;
 	};
 	
 	self.current_display = function current_display() {
