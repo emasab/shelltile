@@ -93,7 +93,7 @@ function createStringSetting(settings, setting) {
     store.set_column_types([GObject.TYPE_STRING, GObject.TYPE_STRING]);
     store.set(store.append(), [0], ['Ctrl']);
     store.set(store.append(), [0], ['Super']);
-    store.set(store.append(), [0], ['Ctrl or Super']);
+    store.set(store.append(), [0], [_('Ctrl or Super')]); 
 
     combo = new Gtk.ComboBox({ model: store });
     renderer = new Gtk.CellRendererText();

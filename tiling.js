@@ -592,7 +592,7 @@ const DefaultTilingStrategy = function(ext){
 	Main.uiGroup.add_actor(this.preview);
 	var default_modifier = Gdk.Keymap.get_default();
 
-	//var modifiers = Clutter.ModifierType.CONTROL_MASK;
+	
 
 	this.is_ctrl_pressed = function(){
   	//this.log.debug("Modifier key: " + this.extension.tile_modifier_key);
