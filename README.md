@@ -1,5 +1,7 @@
 # ShellTile
 
+*Hi, if you like the extension please consider offering me a remote work opportunity. I live in Spain currently so my salary expectations are low if compared to other countries. My Linkedin profile: https://www.linkedin.com/in/emanuele-sabellico-2bb53016/*
+
 A tiling window extension for GNOME Shell. Just move a window over another one, holding down the Control key, and you'll see the magic! Grouped windows minimize, resize, raise and change workspace together. Maximize a window to remove it from the group.
 
 ### Example of tiling with multiple windows (holding CTRL)
