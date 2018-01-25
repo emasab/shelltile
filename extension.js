@@ -18,12 +18,14 @@ const KeyManager = Extension.imports.keymanager.KeyManager;
 const Ext = function Ext(){
 	let self = this;
 	let OVERRIDE_SCHEMA = "org.gnome.shell.overrides";
+	let MUTTER_SCHEMA = "org.gnome.mutter";
 	let KEYBINDING_SCHEMA = "org.gnome.desktop.wm.keybindings";
 	let KEYBINDING_SCHEMA_MUTTER = "org.gnome.mutter.keybindings";
 	
     self.log = Log.getLogger("Ext");
     
-    self.gnome_settings = Convenience.getSettings(OVERRIDE_SCHEMA);	
+	self.gnome_shell_settings = Convenience.getSettings(OVERRIDE_SCHEMA);
+	self.gnome_mutter_settings = Convenience.getSettings(MUTTER_SCHEMA);
     self.settings = Convenience.getSettings();
     self.keybindingSettings = Convenience.getSettings(KEYBINDING_SCHEMA);
     self.keybindingSettingsMutter = Convenience.getSettings(KEYBINDING_SCHEMA_MUTTER);
@@ -241,9 +243,13 @@ const Ext = function Ext(){
 	};
 	
 	self.remove_default_keybindings = function(){
-        var edge_tiling = self.gnome_settings.get_boolean("edge-tiling");
+        var edge_tiling = self.gnome_shell_settings.get_boolean("edge-tiling");
         if(edge_tiling === true){
-        	self.gnome_settings.set_boolean("edge-tiling", false);
+            self.gnome_shell_settings.set_boolean("edge-tiling", false);
+        }
+        var edge_tiling = self.gnome_mutter_settings.get_boolean("edge-tiling");
+        if(edge_tiling === true){
+            self.gnome_mutter_settings.set_boolean("edge-tiling", false);
         }
         self.keybindingSettings.reset("maximize");
         self.keybindingSettings.reset("unmaximize");
@@ -273,7 +279,8 @@ const Ext = function Ext(){
 	    		var on_window_create = this.break_loops(this.on_window_create);
 	    		var on_window_entered_monitor = this.break_loops(this.window_entered_monitor);
 	
-	            self.connect_and_track(self, self.gnome_settings, 'changed', Lang.bind(this, this.on_settings_changed));
+	            self.connect_and_track(self, self.gnome_shell_settings, 'changed', Lang.bind(this, this.on_settings_changed));
+	            self.connect_and_track(self, self.gnome_mutter_settings, 'changed', Lang.bind(this, this.on_settings_changed));
 	            self.connect_and_track(self, self.keybindingSettings, 'changed', Lang.bind(this, this.on_settings_changed));
 	            self.connect_and_track(self, self.keybindingSettingsMutter, 'changed', Lang.bind(this, this.on_settings_changed));
 	            self.connect_and_track(self, self.settings, 'changed', Lang.bind(this, this.on_settings_changed));
@@ -601,7 +608,8 @@ const Ext = function Ext(){
 	self.disable = function(){
         try {        
             self.enabled = false;
-            self.gnome_settings.reset("edge-tiling");
+            self.gnome_shell_settings.reset("edge-tiling");
+            self.gnome_mutter_settings.reset("edge-tiling");
             self.keybindingSettings.reset("maximize");
             self.keybindingSettings.reset("unmaximize");
             self.keybindingSettingsMutter.reset("toggle-tiled-left");
