@@ -1246,7 +1246,11 @@ const DefaultTilingStrategy = function(ext){
 			}
 
 		} else {
-			var is_top = top_zone.contains_rect(cursor_rect);
+			if(this.extension.top_edge_max){
+				var is_top = top_zone.contains_rect(cursor_rect);
+			} else {
+				var is_top = false
+			}
 			var is_bottom = bottom_zone.contains_rect(cursor_rect);
 			var is_left = left_zone.contains_rect(cursor_rect);
 			var is_right = right_zone.contains_rect(cursor_rect);

@@ -23,5 +23,10 @@
       <summary>Key to hold for tiling</summary>
       <description>You can change this modifier key to suit your needs.</description>
     </key>
+    <key type="b" name="top-edge-maximize">
+        <default>true</default>
+        <summary>Top edge maximize</summary>
+        <description>Maximize window when it is dragged to the top of the screen</description>
+    </key>
   </schema>
 </schemalist>

@@ -33,6 +33,10 @@ msgstr "Grandezza dello spazio fra le finestre"
 msgid "Key to hold for tiling"
 msgstr "Tasto da tenere premuto"
 
-#: prefs.js:96
+#: prefs.js:42
+msgid "Top edge maximize active"
+msgstr "Il bordo superiore massimizza"
+
+#: prefs.js:100
 msgid "Ctrl or Super"
 msgstr "Ctrl o Super"

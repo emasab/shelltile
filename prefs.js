@@ -36,6 +36,10 @@ function init() {
     		"tile-modifier-key": {
 	   			 type: "s",
 	   			 label: _("Key to hold for tiling")
+	   		},
+    		"top-edge-maximize": {
+	   			 type: "b",
+	   			 label: _("Top edge maximize active")
 	   		}
     };
 	
