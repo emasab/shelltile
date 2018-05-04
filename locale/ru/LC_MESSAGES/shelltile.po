@@ -1,0 +1,38 @@
+# Russian translation for shelltile.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the ShellTile package.
+# vantu5z <vantu5z@mail.ru>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ShellTile\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-05-04 15:17+0300\n"
+"PO-Revision-Date: 2018-05-04 15:31+0300\n"
+"Last-Translator: vantu5z <vantu5z@mail.ru>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Gtranslator 2.91.7\n"
+
+#: prefs.js:23
+msgid "Keep the window group maximized"
+msgstr "Растягивать группу окон на весь экран"
+
+#: prefs.js:27
+msgid "Adjust the split percentage with the mouse while tiling"
+msgstr "Изменять размер окна с помощью мыши при тайлинге"
+
+#: prefs.js:31
+msgid "Size of the gaps between the windows"
+msgstr "Размер отступов между окнами"
+
+#: prefs.js:38
+msgid "Key to hold for tiling"
+msgstr "Зажимать клавишу для тайлинга"
+
+#: prefs.js:96
+msgid "Ctrl or Super"
+msgstr "Ctrl или Super"
