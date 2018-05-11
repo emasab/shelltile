@@ -1116,12 +1116,6 @@ const DefaultTilingStrategy = function(ext){
 		}
 	}
 
-	this.get_main_panel_rect = function(){
-
-		return new Meta.Rectangle({ x: 0, y: 0, width: Main.panel.actor.width, height: Main.panel.actor.height});
-
-	}
-
 	this.get_cursor_rect = function(){
 		let [mouseX, mouseY] = global.get_pointer();
 		return new Meta.Rectangle({ x: mouseX, y: mouseY, width: 1, height: 1});
@@ -1186,16 +1180,7 @@ const DefaultTilingStrategy = function(ext){
 		return topmost;
 	}
 
-	this.top_edge = function(){
-
-		var main_panel_rect = this.get_main_panel_rect();
-		var cursor_rect = this.get_cursor_rect();
-		return main_panel_rect.contains_rect(cursor_rect)
-
-	}
-
 	this.get_edge_preview = function(win, code){
-		var main_panel_rect = this.get_main_panel_rect();
 		var cursor_rect = this.get_cursor_rect();
 		var monitor = global.screen.get_current_monitor();
 		var monitor_geometry = global.screen.get_monitor_geometry(monitor);
@@ -1204,7 +1189,7 @@ const DefaultTilingStrategy = function(ext){
 		var edge_zone_width = DefaultTilingStrategy.EDGE_ZONE_WIDTH;
 
 		var top_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y, width: monitor_geometry.width, height: edge_zone_width });
-		var bottom_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y + monitor_geometry.height - edge_zone_width , width: monitor_geometry.width, height: main_panel_rect.height });
+		var bottom_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y + monitor_geometry.height - edge_zone_width , width: monitor_geometry.width, height: edge_zone_width });
 		var left_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y, width: edge_zone_width, height: monitor_geometry.height});
 		var right_zone = new Meta.Rectangle({ x: monitor_geometry.x + monitor_geometry.width - edge_zone_width, y: monitor_geometry.y, width: edge_zone_width, height: monitor_geometry.height});
 
@@ -1346,5 +1331,5 @@ const DefaultTilingStrategy = function(ext){
 
 };
 
-DefaultTilingStrategy.EDGE_ZONE_WIDTH = 1;
+DefaultTilingStrategy.EDGE_ZONE_WIDTH = 5;
 DefaultTilingStrategy.ACCELERATOR_TIMEOUT = 300;
