@@ -1203,8 +1203,8 @@ const DefaultTilingStrategy = function(ext){
 		var ret = null;
 		var edge_zone_width = DefaultTilingStrategy.EDGE_ZONE_WIDTH;
 
-		var top_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y, width: monitor_geometry.width, height: main_panel_rect.height});
-		var bottom_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y + monitor_geometry.height - main_panel_rect.height, width: monitor_geometry.width, height: main_panel_rect.height});
+		var top_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y, width: monitor_geometry.width, height: edge_zone_width });
+		var bottom_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y + monitor_geometry.height - edge_zone_width , width: monitor_geometry.width, height: main_panel_rect.height });
 		var left_zone = new Meta.Rectangle({ x: monitor_geometry.x, y: monitor_geometry.y, width: edge_zone_width, height: monitor_geometry.height});
 		var right_zone = new Meta.Rectangle({ x: monitor_geometry.x + monitor_geometry.width - edge_zone_width, y: monitor_geometry.y, width: edge_zone_width, height: monitor_geometry.height});
 
@@ -1346,5 +1346,5 @@ const DefaultTilingStrategy = function(ext){
 
 };
 
-DefaultTilingStrategy.EDGE_ZONE_WIDTH = 20;
+DefaultTilingStrategy.EDGE_ZONE_WIDTH = 1;
 DefaultTilingStrategy.ACCELERATOR_TIMEOUT = 300;
