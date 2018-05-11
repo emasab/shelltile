@@ -124,6 +124,8 @@ const Ext = function Ext(){
 		  mod = "Ctrl";
 		
 		self.tile_modifier_key = mod;
+
+		self.top_edge_max = self.settings.get_boolean("top-edge-maximize");
 	};
 	
 	self.current_display = function current_display() {
