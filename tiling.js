@@ -1181,6 +1181,10 @@ const DefaultTilingStrategy = function(ext){
 	}
 
 	this.get_edge_preview = function(win, code){
+		if(!this.extension.enable_edge_tiling){
+			return null;
+		}
+		
 		var cursor_rect = this.get_cursor_rect();
 		var monitor = global.screen.get_current_monitor();
 		var monitor_geometry = global.screen.get_monitor_geometry(monitor);
@@ -1331,5 +1335,5 @@ const DefaultTilingStrategy = function(ext){
 
 };
 
-DefaultTilingStrategy.EDGE_ZONE_WIDTH = 5;
+DefaultTilingStrategy.EDGE_ZONE_WIDTH = 1;
 DefaultTilingStrategy.ACCELERATOR_TIMEOUT = 300;

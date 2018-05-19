@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ShellTile\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-04 15:17+0300\n"
+"POT-Creation-Date: 2018-05-19 15:54+0200\n"
 "PO-Revision-Date: 2018-05-04 15:31+0300\n"
 "Last-Translator: vantu5z <vantu5z@mail.ru>\n"
 "Language-Team: Russian\n"
@@ -18,21 +18,25 @@ msgstr ""
 "X-Generator: Gtranslator 2.91.7\n"
 
 #: prefs.js:23
+msgid "Enable edge tiling"
+msgstr ""
+
+#: prefs.js:27
 msgid "Keep the window group maximized"
 msgstr "Растягивать группу окон на весь экран"
 
-#: prefs.js:27
+#: prefs.js:31
 msgid "Adjust the split percentage with the mouse while tiling"
 msgstr "Изменять размер окна с помощью мыши при тайлинге"
 
-#: prefs.js:31
+#: prefs.js:35
 msgid "Size of the gaps between the windows"
 msgstr "Размер отступов между окнами"
 
-#: prefs.js:38
+#: prefs.js:42
 msgid "Key to hold for tiling"
 msgstr "Зажимать клавишу для тайлинга"
 
-#: prefs.js:96
+#: prefs.js:100
 msgid "Ctrl or Super"
 msgstr "Ctrl или Super"

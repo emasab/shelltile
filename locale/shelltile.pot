@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-06-21 07:37+0200\n"
+"POT-Creation-Date: 2018-05-19 15:54+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,21 +18,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: prefs.js:23
-msgid "Keep the window group maximized"
+msgid "Enable edge tiling"
 msgstr ""
 
 #: prefs.js:27
-msgid "Adjust the split percentage with the mouse while tiling"
+msgid "Keep the window group maximized"
 msgstr ""
 
 #: prefs.js:31
+msgid "Adjust the split percentage with the mouse while tiling"
+msgstr ""
+
+#: prefs.js:35
 msgid "Size of the gaps between the windows"
 msgstr ""
 
-#: prefs.js:38
+#: prefs.js:42
 msgid "Key to hold for tiling"
 msgstr ""
 
-#: prefs.js:96
+#: prefs.js:100
 msgid "Ctrl or Super"
 msgstr ""

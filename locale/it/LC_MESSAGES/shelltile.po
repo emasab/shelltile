@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ShellTile\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-06-21 07:38+0200\n"
-"PO-Revision-Date: 2017-06-21 07:38+0200\n"
+"POT-Creation-Date: 2018-05-19 15:54+0200\n"
+"PO-Revision-Date: 2018-05-19 15:45+0200\n"
 "Last-Translator: Emanuele Sabellico <emanuele.sabellico@email.it>\n"
 "Language-Team: \n"
 "Language: it\n"
@@ -18,21 +18,25 @@ msgstr ""
 "X-Generator: Poedit 1.8.7.1\n"
 
 #: prefs.js:23
+msgid "Enable edge tiling"
+msgstr "Abilita il ridimensionamento ai bordi"
+
+#: prefs.js:27
 msgid "Keep the window group maximized"
 msgstr "Mantieni il gruppo di finestre massimizzato"
 
-#: prefs.js:27
+#: prefs.js:31
 msgid "Adjust the split percentage with the mouse while tiling"
 msgstr "Modifica la percentuale di divisione con il mouse"
 
-#: prefs.js:31
+#: prefs.js:35
 msgid "Size of the gaps between the windows"
 msgstr "Grandezza dello spazio fra le finestre"
 
-#: prefs.js:38
+#: prefs.js:42
 msgid "Key to hold for tiling"
 msgstr "Tasto da tenere premuto"
 
-#: prefs.js:96
+#: prefs.js:100
 msgid "Ctrl or Super"
 msgstr "Ctrl o Super"

@@ -124,6 +124,7 @@ const Ext = function Ext(){
 		  mod = "Ctrl";
 		
 		self.tile_modifier_key = mod;
+		self.enable_edge_tiling = self.settings.get_boolean("enable-edge-tiling");
 	};
 	
 	self.current_display = function current_display() {
@@ -243,18 +244,16 @@ const Ext = function Ext(){
 	};
 	
 	self.remove_default_keybindings = function(){
-        var edge_tiling = self.gnome_shell_settings.get_boolean("edge-tiling");
-        if(edge_tiling === true){
-            self.gnome_shell_settings.set_boolean("edge-tiling", false);
-        }
-        var edge_tiling = self.gnome_mutter_settings.get_boolean("edge-tiling");
-        if(edge_tiling === true){
-            self.gnome_mutter_settings.set_boolean("edge-tiling", false);
-        }
-        self.keybindingSettings.reset("maximize");
-        self.keybindingSettings.reset("unmaximize");
-        self.keybindingSettingsMutter.reset("toggle-tiled-left");
-        self.keybindingSettingsMutter.reset("toggle-tiled-right");
+		if(self.enable_edge_tiling){
+	        var edge_tiling = self.gnome_shell_settings.get_boolean("edge-tiling");
+	        if(edge_tiling === true){
+	            self.gnome_shell_settings.set_boolean("edge-tiling", false);
+	        }
+	        var edge_tiling = self.gnome_mutter_settings.get_boolean("edge-tiling");
+	        if(edge_tiling === true){
+	            self.gnome_mutter_settings.set_boolean("edge-tiling", false);
+	        }
+		}
 	}
 
 	self.enable = function(){
@@ -265,8 +264,8 @@ const Ext = function Ext(){
             self.screen = global.screen;
             let screen = self.screen;
             
-            self.remove_default_keybindings();
             self.load_settings();
+            self.remove_default_keybindings();
             
             if(!self.initialized){
             	self.initialized = true;
@@ -378,8 +377,8 @@ const Ext = function Ext(){
 		if(!this.enabled || self.on_settings_changed.automatic) return;
 		
 		self.on_settings_changed.automatic = true;
-		self.remove_default_keybindings();
 		self.load_settings();
+		self.remove_default_keybindings();
 		delete self.on_settings_changed.automatic;
 	}
 	

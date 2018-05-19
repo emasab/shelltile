@@ -7,10 +7,19 @@ if [ -z "$1" ]; then
 
 elif [ "$1" = "pot" ]; then
 	
-	xgettext -k_ -kN_ -o locale/shelltile.pot *.js		
+	xgettext -k_ -kN_ -o locale/shelltile.pot *.js
+    for pofile in $(find locale -mindepth 2 | egrep .po); do
+        msgmerge -o $pofile.new $pofile locale/shelltile.pot
+        mv $pofile.new $pofile
+    done
 
 elif [ "$1" = "mo" ]; then
 
 	find . | egrep '\.po$' | while read line; do msgfmt -o $(echo $line | sed 's/\.po$/\.mo/g') ${line}; done
+
+elif [ "$1" = "schemas" ]; then
+
+
+glib-compile-schemas schemas/
 
 fi

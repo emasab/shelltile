@@ -18,6 +18,10 @@ function init() {
 	gsettings = Convenience.getSettings();
 	
     settings = {
+    		"enable-edge-tiling": {
+	   			 type: "b",
+	   			 label: _("Enable edge tiling")
+	   		},
     		"keep-group-maximized": {
     			 type: "b",
     			 label: _("Keep the window group maximized")

@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema path="/org/gnome/shell/extensions/shelltile/" id="org.gnome.shell.extensions.shelltile">
-    
+
+    <key type="b" name="enable-edge-tiling">
+        <default>true</default>
+        <summary>Enable edge tiling</summary>
+        <description>Switch for the edge tiling behavior</description>
+    </key>      
     <key type="b" name="keep-group-maximized">
         <default>true</default>
         <summary>Keep the window group maximized</summary>
