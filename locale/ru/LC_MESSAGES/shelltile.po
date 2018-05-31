@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ShellTile\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-05-19 15:54+0200\n"
-"PO-Revision-Date: 2018-05-04 15:31+0300\n"
+"PO-Revision-Date: 2018-05-25 08:33+0300\n"
 "Last-Translator: vantu5z <vantu5z@mail.ru>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: prefs.js:23
 msgid "Enable edge tiling"
-msgstr ""
+msgstr "Включить выравнивание по сторонам"
 
 #: prefs.js:27
 msgid "Keep the window group maximized"
