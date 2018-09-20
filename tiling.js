@@ -592,7 +592,7 @@ const DefaultTilingStrategy = function(ext){
 	Main.uiGroup.add_actor(this.preview);
 	var default_modifier = Gdk.Keymap.get_default();
 
-	
+
 
 	this.is_ctrl_pressed = function(){
   	//this.log.debug("Modifier key: " + this.extension.tile_modifier_key);
@@ -1184,10 +1184,10 @@ const DefaultTilingStrategy = function(ext){
 		if(!this.extension.enable_edge_tiling){
 			return null;
 		}
-		
+
 		var cursor_rect = this.get_cursor_rect();
-		var monitor = global.screen.get_current_monitor();
-		var monitor_geometry = global.screen.get_monitor_geometry(monitor);
+		var monitor = global.display.get_current_monitor();
+		var monitor_geometry = global.display.get_monitor_geometry(monitor);
 		var maxi = win.get_maximized_bounds(true);
 		var ret = null;
 		var edge_zone_width = DefaultTilingStrategy.EDGE_ZONE_WIDTH;
@@ -1335,5 +1335,5 @@ const DefaultTilingStrategy = function(ext){
 
 };
 
-DefaultTilingStrategy.EDGE_ZONE_WIDTH = 1;
+DefaultTilingStrategy.EDGE_ZONE_WIDTH = 100;
 DefaultTilingStrategy.ACCELERATOR_TIMEOUT = 300;
