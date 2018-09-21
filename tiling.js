@@ -1335,5 +1335,5 @@ const DefaultTilingStrategy = function(ext){
 
 };
 
-DefaultTilingStrategy.EDGE_ZONE_WIDTH = 100;
+DefaultTilingStrategy.EDGE_ZONE_WIDTH = 1;
 DefaultTilingStrategy.ACCELERATOR_TIMEOUT = 300;
