@@ -4,18 +4,18 @@ const Logger = function(name, level){
     let self = this;
     self.base = name;
     if(!level){
-    	level = Logger.DEFAULT_LEVEL;
+        level = Logger.DEFAULT_LEVEL;
     }
     self.level = level;
 
     var checkLevel = function(level){
-    	return level === undefined || self.level === undefined || level >= self.level;
+        return level === undefined || self.level === undefined || level >= self.level;
     }
     
     self.log = function(name, message, level){
-    	if(checkLevel(level)){
-    		global.log("[" + name + "]" + self.base + " " + message);
-    	}
+        if(checkLevel(level)){
+            global.log("[" + name + "]" + self.base + " " + message);
+        }
     }
 
     self.debug = function(message){
@@ -39,19 +39,19 @@ const Logger = function(name, level){
     }
     
     self.is_debug = function(){
-    	return checkLevel(Logger.LEVEL_DEBUG);
+        return checkLevel(Logger.LEVEL_DEBUG);
     }
     
     self.is_info = function(){
-    	return checkLevel(Logger.LEVEL_INFO);
+        return checkLevel(Logger.LEVEL_INFO);
     }
     
     self.is_warn = function(){
-    	return checkLevel(Logger.LEVEL_WARN);
+        return checkLevel(Logger.LEVEL_WARN);
     }
     
     self.is_error = function(){
-    	return checkLevel(Logger.LEVEL_ERROR);
+        return checkLevel(Logger.LEVEL_ERROR);
     }
 }
 
@@ -63,7 +63,7 @@ Logger.LEVEL_ERROR = 3;
 Logger.DEFAULT_LEVEL = Logger.LEVEL_ERROR;
 if(GLib.getenv("SHELLTILE_DEBUG")){
 	
-	Logger.DEFAULT_LEVEL = Logger.LEVEL_DEBUG;
+    Logger.DEFAULT_LEVEL = Logger.LEVEL_DEBUG;
 	
 }
 

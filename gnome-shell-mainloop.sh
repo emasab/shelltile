@@ -2,7 +2,7 @@
  
 control_c()
 {
-	echo "interrupt";
+    echo "interrupt";
 }
 
 log=~/gnome-shell.log
@@ -13,5 +13,5 @@ trap control_c INT
 export SHELLTILE_DEBUG=true
  
 while true; do 
-	gnome-shell --replace >> "$log" 2>&1
+    gnome-shell --replace >> "$log" 2>&1
 done
