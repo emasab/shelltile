@@ -586,14 +586,13 @@ const DefaultTilingStrategy = function(ext){
     this.lastTimeCtrlPressed = null;
     this.lastTimeShiftPressed = null;
 
-    this.preview = new St.BoxLayout({style_class: 'grid-preview'});
-    this.preview.add_style_pseudo_class('activate');
+    this.preview = new St.BoxLayout({style_class: 'tile-preview'});
     this.preview_for_edge_tiling = false;
     this.preview.visible = false;
     Main.uiGroup.add_actor(this.preview);
     var default_modifier = Gdk.Keymap.get_default();
 
-	
+
 
     this.is_ctrl_pressed = function(){
     //this.log.debug("Modifier key: " + this.extension.tile_modifier_key);
@@ -1185,7 +1184,7 @@ const DefaultTilingStrategy = function(ext){
         if(!this.extension.enable_edge_tiling){
             return null;
         }
-		
+
         var cursor_rect = this.get_cursor_rect();
         var monitor = Compatibility.get_screen().get_current_monitor();
         var monitor_geometry = Compatibility.get_screen().get_monitor_geometry(monitor);
