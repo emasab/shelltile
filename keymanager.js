@@ -5,10 +5,10 @@ const Main = imports.ui.main;
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
 const Compatibility = Extension.imports.util.Compatibility;
 
-const KeyManager = new Lang.Class({
+var KeyManager = new Lang.Class({
     Name: 'MyKeyManager',
 
-    _init: function() {
+    _init: function(){
         this.grabbers = new Map()
 
         Compatibility.get_display().connect(
@@ -24,7 +24,7 @@ const KeyManager = new Lang.Class({
         //log('Trying to listen for hot key [accelerator={}]', accelerator)
         let action = Compatibility.get_display().grab_accelerator(accelerator)
 
-        if(action == Meta.KeyBindingAction.NONE) {
+        if(action == Meta.KeyBindingAction.NONE){
             //log('Unable to grab accelerator [binding={}]', accelerator)
         } else {
             //log('Grabbed accelerator [action={}]', action)
@@ -44,10 +44,10 @@ const KeyManager = new Lang.Class({
 
     },
 
-    _onAccelerator: function(action) {
+    _onAccelerator: function(action){
         let grabber = this.grabbers.get(action)
 
-        if(grabber) {
+        if(grabber){
             this.grabbers.get(action).callback()
         } else {
             //log('No listeners [action={}]', action)

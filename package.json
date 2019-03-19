@@ -1,0 +1,18 @@
+{
+  "name": "shelltile",
+  "version": "2.0.0",
+  "description": "A tiling window extension for Gnome Shell",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emasab/shelltile.git"
+  },
+  "author": "Emanuele Sabellico (emasab@gmail.com)",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/emasab/shelltile/issues"
+  },
+  "homepage": "https://github.com/emasab/shelltile#readme",
+  "devDependencies": {
+    "eslint": "^5.15.3"
+  }
+}
