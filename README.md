@@ -10,7 +10,15 @@ A video is the best way to explain it:
 
 [Video on YouTube](https://www.youtube.com/watch?v=hNncF9Pc6PY)
 
-Send your feedback here:
+#### Installation of the BETA version
+
+- Download the zip from https://github.com/emasab/shelltile/releases/tag/2.0.0
+- extract to ~/.local/share/gnome-shell/extensions
+- restart Gnome Shell Alt+F2 - r - ENTER
+- Open GNOME Tweaks - Extensions - Activate ShellTile
+
+
+#### Send your feedback here:
 
 https://github.com/emasab/shelltile/issues/78
 
