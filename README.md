@@ -6,7 +6,13 @@ A tiling window extension for GNOME Shell. Just move a window over another one, 
 
 ### New feature! Quick tiling with screen borders.
 
+A video is the best way to explain it:
+
 [Video on YouTube](https://www.youtube.com/watch?v=hNncF9Pc6PY)
+
+Send your feedback here:
+
+https://github.com/emasab/shelltile/issues/78
 
 ### Example of tiling with multiple windows (holding CTRL)
 
