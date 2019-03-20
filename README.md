@@ -18,10 +18,6 @@ https://github.com/emasab/shelltile/issues/78
 
 ![tiling windows](/README/img/window_tiling.gif)
 
-### Example of classic edge resizing (CTRL not needed)
-
-![tiling windows](/README/img/edge_tiling.gif)
-
 ### Example of how windows stay grouped
 
 ![tiling windows](/README/img/coordinated_actions.gif)
