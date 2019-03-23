@@ -10,7 +10,7 @@ A video is the best way to explain it:
 
 [Video on YouTube](https://www.youtube.com/watch?v=hNncF9Pc6PY)
 
-**Long explanation:**
+**Detailed explanation:**
 
 Before when using the screen borders only a move and resize was made, instead if holding Ctrl you could group windows together. Now you can still group windows with Ctrl, but they are grouped when you use the screen borders too (if a valid tiling can be generated with the topmost window already edge-tiled)
 
