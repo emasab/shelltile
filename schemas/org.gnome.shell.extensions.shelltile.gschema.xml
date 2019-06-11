@@ -6,7 +6,12 @@
         <default>true</default>
         <summary>Enable edge tiling</summary>
         <description>Switch for the edge tiling behavior</description>
-    </key>      
+    </key>
+    <key type="b" name="grouping-edge-tiling">
+        <default>true</default>
+        <summary>Grouping edge tiling</summary>
+        <description>Create groups while edge tiling</description>
+    </key>
     <key type="b" name="keep-group-maximized">
         <default>true</default>
         <summary>Keep the window group maximized</summary>

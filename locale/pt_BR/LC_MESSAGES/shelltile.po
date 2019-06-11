@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-10-06 16:19+0200\n"
+"POT-Creation-Date: 2019-06-11 18:28+0200\n"
 "PO-Revision-Date: 2017-10-25 22:03-0300\n"
 "Last-Translator: Diego R Lima <contact@diegoribeiro.net>\n"
 "Language-Team: \n"
@@ -23,21 +23,25 @@ msgid "Enable edge tiling"
 msgstr ""
 
 #: prefs.js:27
+msgid "Grouping edge tiling"
+msgstr ""
+
+#: prefs.js:31
 msgid "Keep the window group maximized"
 msgstr "Manter o grupo de janela maximizado"
 
-#: prefs.js:31
+#: prefs.js:35
 msgid "Adjust the split percentage with the mouse while tiling"
 msgstr "Ajustar a porcentagem de divisão com o mouse"
 
-#: prefs.js:35
+#: prefs.js:39
 msgid "Size of the gaps between the windows"
 msgstr "Tamanho dos espaços entre as janelas"
 
-#: prefs.js:42
+#: prefs.js:46
 msgid "Key to hold for tiling"
 msgstr "Pressionar tecla para ajustar porcentagem"
 
-#: prefs.js:100
+#: prefs.js:115
 msgid "Ctrl or Super"
 msgstr "Ctrl ou Super"

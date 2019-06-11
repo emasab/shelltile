@@ -1794,7 +1794,7 @@ var DefaultTilingStrategy = function (ext){
 
         }
 
-        if (version310 && ret && !ret.maximize && !!this.extension.keep_maximized){
+        if (version310 && this.extension.grouping_edge_tiling && ret && !ret.maximize && !!this.extension.keep_maximized){
             ret = this.get_edge_tiling(win, {
                 is_top,
                 is_bottom,

@@ -22,6 +22,10 @@ function init(){
             type: "b",
             label: _("Enable edge tiling")
         },
+        "grouping-edge-tiling": {
+            type: "b",
+            label: _("Grouping edge tiling")
+        },
         "keep-group-maximized": {
             type: "b",
             label: _("Keep the window group maximized")
