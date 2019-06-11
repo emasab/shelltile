@@ -14,13 +14,6 @@ A video is the best way to explain it:
 
 Before when using the screen borders only a move and resize was made, instead if holding Ctrl you could group windows together. Now you can still group windows with Ctrl, but they are grouped when you use the screen borders too (if a valid tiling can be generated with the topmost window already edge-tiled)
 
-#### Installation of the BETA version
-
-- Download the zip from https://github.com/emasab/shelltile/releases/tag/2.0.0
-- extract to ~/.local/share/gnome-shell/extensions
-- restart Gnome Shell Alt+F2 - r - ENTER
-- Open GNOME Tweaks - Extensions - Activate ShellTile
-
 
 #### Send your feedback here:
 
