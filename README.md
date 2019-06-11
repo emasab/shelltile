@@ -12,7 +12,7 @@ A video is the best way to explain it:
 
 **Detailed explanation:**
 
-Before when using the screen borders only a move and resize was made, instead if holding Ctrl you could group windows together. Now you can still group windows with Ctrl, but they are grouped when you use the screen borders too (if a valid tiling can be generated with the topmost window already edge-tiled)
+Before when using the screen borders only a move and resize was made, instead if holding Ctrl you could group windows together. Now you can still group windows with Ctrl, but they are grouped when you use the screen borders too (if a valid tiling can be generated with the topmost window already edge-tiled). You can disable the new behavior in the extension setting.
 
 ### Example of tiling with multiple windows (holding CTRL)
 
