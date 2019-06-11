@@ -22,11 +22,8 @@ elif [ "$1" = "schemas" ]; then
 
 glib-compile-schemas schemas/
 
-elif [ "$1" = "eclint" ]; then
+elif [ "$1" = "eslint" ]; then
 
-echo "checking..."
-eclint check .gitignore *.js *.sh
-echo "fixing..."
-eclint fix .gitignore *.js *.sh
+npx eslint . --fix
 
 fi
