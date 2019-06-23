@@ -490,20 +490,6 @@ const Ext = function Ext(){
         //if(this.log.is_debug()) this.log.debug("window resized");
     }
 
-    self.on_window_drag_begin = function (win){
-        if (!this.enabled) return;
-
-        if (this.strategy && this.strategy.on_window_drag_begin) this.strategy.on_window_drag_begin(win);
-        //if(this.log.is_debug()) this.log.debug("window drag begin");
-    }
-
-    self.on_window_drag_end = function (win){
-        if (!this.enabled) return;
-
-        if (this.strategy && this.strategy.on_window_drag_end) this.strategy.on_window_drag_end(win);
-        //if(this.log.is_debug()) this.log.debug("window drag end");
-    }
-
     self.break_loops = function (func){
         return function (){
             if (this.calling === true) return;
@@ -519,37 +505,52 @@ const Ext = function Ext(){
 
     self.bind_to_window_change = function (win, actor){
 
+        var requested_win_id = Window.get_id(win.meta_window);
+            
+        var catch_errors = function(cb, win){
+            if (cb){
+                try { 
+                    cb(win);
+                }
+                catch(e){
+                    if(self.log.is_error()) self.log.error(e);
+                }
+            }
+        }
+
         return Lang.bind(this, function (relevant_grabs, cb, cb_final){
-            var win_id = win.id();
-            var stopped = false;
+            var active = false;
             var grab_begin = function (display, screen, window, grab_op){
+                if(!window) return;
+                var win_id = Window.get_id(window);
+                if(requested_win_id!=win_id) return;
                 if (relevant_grabs.indexOf(grab_op) == -1) return;
-                if (win_id != Window.get_id(window)) return;
+                active = true;
 
                 var repeat = function (){
-                    if (stopped) return;
+                    if (!active) return;
                     grab_op = display.get_grab_op();
                     if (relevant_grabs.indexOf(grab_op) == -1){
-                        if (cb_final) cb_final(win);
-                        stopped = true;
+                        catch_errors(cb_final, win);
+                        active = false;
                     }
-                    if (!stopped){
-                        if (cb) cb(win);
+                    if (active){
+                        catch_errors(cb, win);
                         Mainloop.timeout_add(200, repeat);
                     }
                 };
                 Mainloop.timeout_add(200, repeat);
-
-                stopped = false;
-                if (cb) cb(win);
+                catch_errors(cb, win);
             }
             var grab_end = function (display, screen, window, grab_op){
-                if (stopped) return;
+                if(!window) return;
+                var win_id = Window.get_id(window); 
+                if(requested_win_id!=win_id) return;
+                if (!active) return;
                 if (relevant_grabs.indexOf(grab_op) == -1) return;
-                if (win_id != Window.get_id(window)) return;
 
-                if (cb_final) cb_final(win);
-                stopped = true;
+                catch_errors(cb_final, win);
+                active = false;
             }
 
 
@@ -581,7 +582,10 @@ const Ext = function Ext(){
         var on_window_remove = this.break_loops(this.on_window_remove);
         this.connect_and_track(this, meta_window, 'unmanaged', Lang.bind(this, on_window_remove));
 
-        let move_ops = [Meta.GrabOp.MOVING];
+        let move_ops = [
+            Meta.GrabOp.MOVING,
+            Meta.GrabOp.KEYBOARD_MOVING
+        ];
         let resize_ops = [
             Meta.GrabOp.RESIZING_SE,
             Meta.GrabOp.RESIZING_S,
@@ -590,7 +594,16 @@ const Ext = function Ext(){
             Meta.GrabOp.RESIZING_NE,
             Meta.GrabOp.RESIZING_NW,
             Meta.GrabOp.RESIZING_W,
-            Meta.GrabOp.RESIZING_E
+            Meta.GrabOp.RESIZING_E,
+            Meta.GrabOp.KEYBOARD_RESIZING_NE,
+            Meta.GrabOp.KEYBOARD_RESIZING_NW,
+            Meta.GrabOp.KEYBOARD_RESIZING_SE,
+            Meta.GrabOp.KEYBOARD_RESIZING_SW,
+            Meta.GrabOp.KEYBOARD_RESIZING_N,
+            Meta.GrabOp.KEYBOARD_RESIZING_E,
+            Meta.GrabOp.KEYBOARD_RESIZING_S,
+            Meta.GrabOp.KEYBOARD_RESIZING_W,
+            Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN
         ];
         var on_window_move = this.break_loops(this.on_window_move);
         var on_window_moved = this.break_loops(this.on_window_moved);
@@ -604,8 +617,6 @@ const Ext = function Ext(){
 
         bind_to_window_change(move_ops, Lang.bind(this, on_window_move), Lang.bind(this, on_window_moved));
         bind_to_window_change(resize_ops, Lang.bind(this, on_window_resize), Lang.bind(this, on_window_resized));
-        //this.connect_and_track(this, meta_window, 'drag-begin', Lang.bind(this, on_window_drag_begin));
-        //this.connect_and_track(this, meta_window, 'drag-end', Lang.bind(this, on_window_drag_end));
         this.connect_and_track(this, meta_window, 'raised', Lang.bind(this, on_window_raised));
         this.connect_and_track(this, meta_window, "workspace_changed", Lang.bind(this, on_workspace_changed));
         win._connected = true;

@@ -815,7 +815,7 @@ var DefaultTilingStrategy = function (ext){
                 this.preview_for_edge_tiling = for_edge_tiling;
                 this.update_preview(preview_rect);
 
-            } else if (win.group && detach_window){
+            } else if (win.group && detach_window && win.has_moved_enough_for_detach()){
 
                 this.extension._automatic_change = true;
                 if (!this._check_after_move) this._check_after_move = [];
@@ -894,7 +894,7 @@ var DefaultTilingStrategy = function (ext){
                         if (preview_rect.maximize) win.maximize();
                         else win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);
                     }
-                } else {
+                } else if(win.has_moved_enough_for_detach()){
                     this.check_after_move(win);
                 }
 
@@ -1021,15 +1021,6 @@ var DefaultTilingStrategy = function (ext){
         */
     }
 
-
-    this.on_window_drag_begin = function (win){
-        win._dragging = true;
-    }
-
-    this.on_window_drag_end = function (win){
-        delete win._dragging;
-    }
-
     this.on_window_resized = function (win){
         win.update_geometry(false, true);
         this.on_window_resize(win);
@@ -1063,16 +1054,18 @@ var DefaultTilingStrategy = function (ext){
     }
 
     this.on_window_unmaximize = function (win){
-        if (win.group){
-            var topmost_group = win.group.get_topmost_group();
-            topmost_group.unminimize(true);
-            topmost_group.reposition();
-        } else {
-            if (win.check_after){
-                delete win.check_after;
-                win.after_group();
+        Mainloop.idle_add(Lang.bind(this, function(){
+            if (win.group){
+                var topmost_group = win.group.get_topmost_group();
+                topmost_group.unminimize(true);
+                topmost_group.reposition();
+            } else {
+                if (win.check_after){
+                    delete win.check_after;
+                    win.after_group();
+                }
             }
-        }
+        }));
     }
 
     this.detach_window = function (win){

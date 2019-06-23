@@ -19,6 +19,8 @@ Window.blacklist_classes = [
     'Conky'
 ];
 
+Window.MINIMUM_MOVE_FOR_DETACH = 30
+
 Window.prototype = {
     _init: function (meta_window, ext){
         this._windowTracker = Shell.WindowTracker.get_default();
@@ -47,6 +49,17 @@ Window.prototype = {
     
     before_group: function (){
         if (!this.before_group_size) this.before_group_size = this.outer_rect();
+    },
+
+    has_moved_enough_for_detach: function(){
+        if(!this.saved_position) return false;
+        else {
+            var dist = Math.sqrt(
+                Math.pow(this.xpos()-this.saved_position.x,2)+
+            Math.pow(this.ypos()-this.saved_position.y,2)
+            );
+            return dist > Window.MINIMUM_MOVE_FOR_DETACH;
+        }
     },
     
     after_group: function (keep_position){
@@ -151,14 +164,12 @@ Window.prototype = {
     
     move_resize: function (x, y, w, h){
         this.meta_window.move_resize_frame(true, x, y, w, h);
-        if (this.is_maximized()){
-            if (!this.saved_position) this.saved_position = {};
-            if (!this.saved_size) this.saved_size = {};
-            this.saved_position.x = x;
-            this.saved_position.y = y;
-            this.saved_size.width = w;
-            this.saved_size.height = h;
-        }
+        if (!this.saved_position) this.saved_position = {};
+        if (!this.saved_size) this.saved_size = {};
+        this.saved_position.x = x;
+        this.saved_position.y = y;
+        this.saved_size.width = w;
+        this.saved_size.height = h;
     },
     
     get_title: function (){
@@ -436,7 +447,7 @@ Window.prototype = {
                 return this.meta_window.get_outer_rect();
             }
         }
-    },    
+    },
     get_monitor: function (){
         return this.meta_window.get_monitor();
     },
@@ -456,7 +467,7 @@ Window.TOP_EDGE = parseInt("1000", 2)
 
 Window.get_id = function (w){
     if (!w || !w.get_stable_sequence){
-        Log.getLogger("shellshape.window").error("Non-window object: " + w);
+        Log.getLogger("shelltile").error("Non-window object: " + w);
     }
     return w.get_stable_sequence();
 }
