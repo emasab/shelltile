@@ -60,9 +60,9 @@ var WindowGroup = function (first, second, type, splitPercent){
         return this.first.has_hole() || this.second.has_hole();
     }
 
-    this.get_maximized_bounds = function (){
-        if (this.first.has_real_window()) return this.first.get_maximized_bounds();
-        else return this.second.get_maximized_bounds();
+    this.get_maximized_bounds = function (cursor){
+        if (this.first.has_real_window()) return this.first.get_maximized_bounds(cursor);
+        else return this.second.get_maximized_bounds(cursor);
     }
 
     this.get_workspace = function (){
@@ -70,8 +70,8 @@ var WindowGroup = function (first, second, type, splitPercent){
         else return this.second.get_workspace();
     }
 
-    this.maximize_size = function (){
-        var bounds = this.get_maximized_bounds();
+    this.maximize_size = function (cursor){
+        var bounds = this.get_maximized_bounds(cursor);
         this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 
@@ -473,7 +473,7 @@ var WindowGroup = function (first, second, type, splitPercent){
 
     }
 
-    this.attach = function (win, replace){
+    this.attach = function (win, replace, cursor){
 
         if (this.first.group){
             var withGroup = this.first;
@@ -509,7 +509,7 @@ var WindowGroup = function (first, second, type, splitPercent){
 
         if (this.extension.keep_maximized){
 
-            group.maximize_size();
+            group.maximize_size(cursor);
 
         } else {
 
@@ -669,17 +669,17 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.clone = function (){
+    this.clone = function (cursor){
         if (!this.first.first){
             var first = new FakeWindow(this.extension, this.first.has_real_window() ? this.first : undefined);
-        } else var first = this.first.clone();
+        } else var first = this.first.clone(cursor);
         if (!this.second.first){
             var second = new FakeWindow(this.extension, this.second.has_real_window() ? this.second : undefined);
-        } else var second = this.second.clone();
+        } else var second = this.second.clone(cursor);
 
         var ret = new WindowGroup(first, second, this.type, this.splitPercent);
         ret.extension = this.extension;
-        ret.attach();
+        ret.attach(undefined, undefined, cursor);
         return ret;
     }
 }
@@ -1385,9 +1385,9 @@ var DefaultTilingStrategy = function (ext){
         if (preview && window_under){
             if (window_under.group){
                 var topmost_group = window_under.group.get_topmost_group();
-                var topmost_group_clone = topmost_group.clone();
+                var topmost_group_clone = topmost_group.clone(true);
                 topmost_group_clone.update_geometry();
-                this.log.debug("topmost_group_clone " + topmost_group_clone);
+                //if(this.log.is_debug()) this.log.debug("topmost_group_clone " + topmost_group_clone);
                 window_under = WindowGroup.find_cloned_child(topmost_group, topmost_group_clone, window_under);
             }
         }
@@ -1474,7 +1474,7 @@ var DefaultTilingStrategy = function (ext){
 
                     newgroup = new WindowGroup(first, second, new_type, other_side.splitPercent);
                     newgroup.extension = this.extension;
-                    newgroup.attach();
+                    newgroup.attach(undefined, undefined, true);
 
                 } else if (rotate_half_screen){
 
@@ -1507,7 +1507,7 @@ var DefaultTilingStrategy = function (ext){
 
                     var newgroup_other_side = new WindowGroup(newgroup_other_side_first, newgroup_other_side_second, top_group_type, top_group_splitPercent);
                     newgroup_other_side.extension = this.extension;
-                    newgroup_other_side.attach();
+                    newgroup_other_side.attach(undefined, undefined, true);
 
                     var window_one = window_under;
                     var window_two = newgroup_other_side;
@@ -1517,7 +1517,7 @@ var DefaultTilingStrategy = function (ext){
 
                     newgroup = new WindowGroup(first, second, new_type, top_window_under_splitPercent || other_side_splitPercent);
                     newgroup.extension = this.extension;
-                    newgroup.attach();
+                    newgroup.attach(undefined, undefined, true);
 
                 }
             }
@@ -1542,7 +1542,7 @@ var DefaultTilingStrategy = function (ext){
 
                 newgroup = new WindowGroup(first, second, new_type, splitPercent);
                 newgroup.extension = this.extension;
-                newgroup.attach(win);
+                newgroup.attach(win, undefined, true);
 
             } else if (window_under.group &&
                 !(window_under.group.group && (is_top_or_bottom || is_left_or_right)) &&
@@ -1557,7 +1557,7 @@ var DefaultTilingStrategy = function (ext){
 
                 newgroup = new WindowGroup(first, second, window_under.group.type, window_under.group.splitPercent);
                 newgroup.extension = this.extension;
-                newgroup.attach(win, true);
+                newgroup.attach(win, true, true);
 
 
 
@@ -1601,15 +1601,15 @@ var DefaultTilingStrategy = function (ext){
 
             var group = new WindowGroup(first, second, group_type, perc);
             group.extension = this.extension;
-            group.attach(win);
+            group.attach(win, undefined, true);
             win = group;
         }
         orig_win.before_group();
 
         if (win && win.first && preview){
-            this.log.debug("win before" + win);
+            //if(this.log.is_debug()) this.log.debug("win before" + win);
             win = WindowGroup.find_cloned_child(win, win, orig_win);
-            this.log.debug("win after" + win);
+            //if(this.log.is_debug()) this.log.debug("win after" + win);
         }
 
         return win;

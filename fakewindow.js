@@ -149,7 +149,7 @@ FakeWindow.prototype = {
     
     get_maximized_bounds: function (cursor){
         if (this.original_win){
-            return this.original_win.get_maximized_bounds();
+            return this.original_win.get_maximized_bounds(cursor);
         }
     },
     
