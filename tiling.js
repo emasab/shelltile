@@ -305,6 +305,8 @@ var WindowGroup = function (first, second, type, splitPercent){
 
             this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
         }
+        var bounds = this.outer_rect();
+        this.update_split_percent(bounds, win);
 
         if (this.splitPercent <= 0.05 && !this.first.has_real_window()){
             this.detach(this.first);
