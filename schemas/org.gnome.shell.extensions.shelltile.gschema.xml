@@ -27,7 +27,11 @@
       <summary>Size of the gaps between the windows</summary>
       <description>You can reduce the default size of the gaps between the windows</description>
     </key>
-    
+    <key type="i" name="edge-zone-width">
+      <default>1</default>
+      <summary>Size of active edge tiling zone</summary>
+      <description>Expecially useful for multiple monitors users</description>
+    </key>    
     <key type="s" name="tile-modifier-key">
       <default>"Ctrl"</default>
       <summary>Key to hold for tiling</summary>

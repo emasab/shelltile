@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ShellTile\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-06-11 18:28+0200\n"
-"PO-Revision-Date: 2019-06-11 18:32+0200\n"
+"POT-Creation-Date: 2019-08-22 21:00+0200\n"
+"PO-Revision-Date: 2019-08-22 21:02+0200\n"
 "Last-Translator: Emanuele Sabellico <emanuele.sabellico@email.it>\n"
 "Language-Team: \n"
 "Language: it\n"
@@ -38,9 +38,13 @@ msgid "Size of the gaps between the windows"
 msgstr "Grandezza dello spazio fra le finestre"
 
 #: prefs.js:46
+msgid "Size of active edge tiling zone"
+msgstr "Grandezza della zona attiva ai bordi"
+
+#: prefs.js:53
 msgid "Key to hold for tiling"
 msgstr "Tasto da tenere premuto"
 
-#: prefs.js:115
+#: prefs.js:122
 msgid "Ctrl or Super"
 msgstr "Ctrl o Super"

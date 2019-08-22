@@ -129,6 +129,7 @@ const Ext = function Ext(){
         self.tile_modifier_key = mod;
         self.enable_edge_tiling = self.settings.get_boolean("enable-edge-tiling");
         self.grouping_edge_tiling = self.settings.get_boolean("grouping-edge-tiling");
+        self.edge_zone_width = self.settings.get_int("edge-zone-width");
     };
 
     self.current_display = function current_display(){

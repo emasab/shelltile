@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-06-11 18:28+0200\n"
+"POT-Creation-Date: 2019-08-22 21:00+0200\n"
 "PO-Revision-Date: 2017-10-25 22:03-0300\n"
 "Last-Translator: Diego R Lima <contact@diegoribeiro.net>\n"
 "Language-Team: \n"
@@ -39,9 +39,13 @@ msgid "Size of the gaps between the windows"
 msgstr "Tamanho dos espaços entre as janelas"
 
 #: prefs.js:46
+msgid "Size of active edge tiling zone"
+msgstr ""
+
+#: prefs.js:53
 msgid "Key to hold for tiling"
 msgstr "Pressionar tecla para ajustar porcentagem"
 
-#: prefs.js:115
+#: prefs.js:122
 msgid "Ctrl or Super"
 msgstr "Ctrl ou Super"

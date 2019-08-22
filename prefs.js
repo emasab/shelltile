@@ -38,7 +38,14 @@ function init(){
             type: "i",
             label: _("Size of the gaps between the windows"),
             min: 0,
-            max: 10,
+            max: 50,
+            step: 1
+        },
+        "edge-zone-width": {
+            type: "i",
+            label: _("Size of active edge tiling zone"),
+            min: 1,
+            max: 50,
             step: 1
         },
         "tile-modifier-key": {

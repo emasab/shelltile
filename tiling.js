@@ -1627,10 +1627,7 @@ var DefaultTilingStrategy = function (ext){
         var monitor_geometry = Compatibility.get_screen().get_monitor_geometry(monitor);
         var maxi = win.get_maximized_bounds(true);
         var ret = null;
-        if (this.is_ctrl_pressed())
-            var edge_zone_width = DefaultTilingStrategy.CTRL_EDGE_ZONE_WIDTH;
-        else
-            var edge_zone_width = DefaultTilingStrategy.EDGE_ZONE_WIDTH;
+        var edge_zone_width = this.extension.edge_zone_width;
 
         var top_zone = new Meta.Rectangle({
             x: monitor_geometry.x,
@@ -1811,6 +1808,4 @@ var DefaultTilingStrategy = function (ext){
 
 };
 
-DefaultTilingStrategy.EDGE_ZONE_WIDTH = 1;
-DefaultTilingStrategy.CTRL_EDGE_ZONE_WIDTH = 20;
 DefaultTilingStrategy.ACCELERATOR_TIMEOUT = 300;
