@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ShellTile\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-08-22 21:00+0200\n"
-"PO-Revision-Date: 2018-05-25 08:33+0300\n"
+"PO-Revision-Date: 2019-09-16 08:54+0300\n"
 "Last-Translator: vantu5z <vantu5z@mail.ru>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -24,7 +24,7 @@ msgstr "Включить выравнивание по сторонам"
 #: prefs.js:27
 #, fuzzy
 msgid "Grouping edge tiling"
-msgstr "Включить выравнивание по сторонам"
+msgstr "Группировка при выравнивании по сторонам"
 
 #: prefs.js:31
 msgid "Keep the window group maximized"
@@ -40,11 +40,11 @@ msgstr "Размер отступов между окнами"
 
 #: prefs.js:46
 msgid "Size of active edge tiling zone"
-msgstr ""
+msgstr "Размер активной зоны для выравнивания по сторонам"
 
 #: prefs.js:53
 msgid "Key to hold for tiling"
-msgstr "Зажимать клавишу для тайлинга"
+msgstr "Удерживать клавишу для тайлинга"
 
 #: prefs.js:122
 msgid "Ctrl or Super"
