@@ -117,6 +117,10 @@ const OverviewModifierBase = function (){
             clone.y = geometry.y;
             clone.width = geometry.width;
             clone.height = geometry.height;
+            clone.windowCenter = {
+                x: (clone.x + parseInt(clone.width/2)),
+                y: (clone.y + parseInt(clone.height/2))
+            }
 
             clone._ids = cloneGroupObject.ids();
             //clone.metaWindow = top_left_window.meta_window;			
