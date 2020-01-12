@@ -1,14 +1,14 @@
 # Russian translation for shelltile.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the ShellTile package.
-# vantu5z <vantu5z@mail.ru>, 2018.
+# vantu5z <vantu5z@mail.ru>, 2018-2020.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ShellTile\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-08-22 21:00+0200\n"
-"PO-Revision-Date: 2019-09-16 08:54+0300\n"
+"PO-Revision-Date: 2020-01-12 15:15+0300\n"
 "Last-Translator: vantu5z <vantu5z@mail.ru>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -22,7 +22,6 @@ msgid "Enable edge tiling"
 msgstr "Включить выравнивание по сторонам"
 
 #: prefs.js:27
-#, fuzzy
 msgid "Grouping edge tiling"
 msgstr "Группировка при выравнивании по сторонам"
 
