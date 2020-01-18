@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ShellTile\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-08-22 21:00+0200\n"
-"PO-Revision-Date: 2020-01-12 15:15+0300\n"
+"PO-Revision-Date: 2020-01-18 17:52+0300\n"
 "Last-Translator: vantu5z <vantu5z@mail.ru>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -43,7 +43,7 @@ msgstr "Размер активной зоны для выравнивания �
 
 #: prefs.js:53
 msgid "Key to hold for tiling"
-msgstr "Удерживать клавишу для тайлинга"
+msgstr "Удерживаемая клавиша для выравнивания по сторонам"
 
 #: prefs.js:122
 msgid "Ctrl or Super"
