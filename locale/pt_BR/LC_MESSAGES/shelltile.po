@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-22 21:00+0200\n"
+"POT-Creation-Date: 2020-01-19 12:33+0100\n"
 "PO-Revision-Date: 2017-10-25 22:03-0300\n"
 "Last-Translator: Diego R Lima <contact@diegoribeiro.net>\n"
 "Language-Team: \n"
@@ -46,6 +46,26 @@ msgstr ""
 msgid "Key to hold for tiling"
 msgstr "Pressionar tecla para ajustar porcentagem"
 
-#: prefs.js:122
+#: prefs.js:57
+msgid "Enable keybindings"
+msgstr ""
+
+#: prefs.js:61
+msgid "Tile to the left edge"
+msgstr ""
+
+#: prefs.js:65
+msgid "Tile to the right edge"
+msgstr ""
+
+#: prefs.js:69
+msgid "Tile to the top edge"
+msgstr ""
+
+#: prefs.js:73
+msgid "Tile to the bottom edge"
+msgstr ""
+
+#: prefs.js:160
 msgid "Ctrl or Super"
 msgstr "Ctrl ou Super"

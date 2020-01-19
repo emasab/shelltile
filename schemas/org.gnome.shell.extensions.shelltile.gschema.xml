@@ -37,5 +37,34 @@
       <summary>Key to hold for tiling</summary>
       <description>You can change this modifier key to suit your needs.</description>
     </key>
+    <key type="b" name="enable-keybindings">
+        <default>true</default>
+        <summary>Enable the extension keybindings</summary>
+        <description>Enable the extension keybindings</description>
+    </key>
+    <key name="tile-left" type="as">
+      <default><![CDATA[['<Ctrl><Super>j']]]></default>
+      <summary>Tile to the left edge</summary>
+      <description>
+      </description>
+    </key>
+    <key name="tile-right" type="as">
+      <default><![CDATA[['<Ctrl><Super>l']]]></default>
+      <summary>Tile to the right edge</summary>
+      <description>
+      </description>
+    </key>
+    <key name="tile-up" type="as">
+      <default><![CDATA[['<Ctrl><Super>i']]]></default>
+      <summary>Tile to the top edge</summary>
+      <description>
+      </description>
+    </key>
+    <key name="tile-down" type="as">
+      <default><![CDATA[['<Ctrl><Super>k']]]></default>
+      <summary>Tile to the bottom edge</summary>
+      <description>
+      </description>
+    </key>
   </schema>
 </schemalist>

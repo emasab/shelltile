@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ShellTile\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-22 21:00+0200\n"
-"PO-Revision-Date: 2019-08-22 21:02+0200\n"
+"POT-Creation-Date: 2020-01-19 12:33+0100\n"
+"PO-Revision-Date: 2020-01-19 12:44+0100\n"
 "Last-Translator: Emanuele Sabellico <emanuele.sabellico@email.it>\n"
 "Language-Team: \n"
 "Language: it\n"
@@ -23,7 +23,7 @@ msgstr "Abilita il ridimensionamento ai bordi"
 
 #: prefs.js:27
 msgid "Grouping edge tiling"
-msgstr "Raggruppa le finestre  usando il ridimensionamento ai bordi"
+msgstr "Raggruppa le finestre usando il ridimensionamento ai bordi"
 
 #: prefs.js:31
 msgid "Keep the window group maximized"
@@ -45,6 +45,26 @@ msgstr "Grandezza della zona attiva ai bordi"
 msgid "Key to hold for tiling"
 msgstr "Tasto da tenere premuto"
 
-#: prefs.js:122
+#: prefs.js:57
+msgid "Enable keybindings"
+msgstr "Abilita le scorciatoie da tastiera"
+
+#: prefs.js:61
+msgid "Tile to the left edge"
+msgstr "Ridimensionamento a sinistra"
+
+#: prefs.js:65
+msgid "Tile to the right edge"
+msgstr "Ridimensionamento a destra"
+
+#: prefs.js:69
+msgid "Tile to the top edge"
+msgstr "Ridimensionamento in alto"
+
+#: prefs.js:73
+msgid "Tile to the bottom edge"
+msgstr "Ridimensionamento in basso"
+
+#: prefs.js:160
 msgid "Ctrl or Super"
 msgstr "Ctrl o Super"

@@ -1,6 +1,7 @@
 const Main = imports.ui.main;
 const Meta = imports.gi.Meta;
 const Gio = imports.gi.Gio;
+const Shell      = imports.gi.Shell;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -12,9 +13,9 @@ const DefaultTilingStrategy = Extension.imports.tiling.DefaultTilingStrategy;
 const OverviewModifier = Extension.imports.overview.OverviewModifier;
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 const Convenience = Extension.imports.convenience;
+const Prefs = Extension.imports.prefs;
 const Util = Extension.imports.util;
 const Compatibility = Extension.imports.util.Compatibility;
-const KeyManager = Extension.imports.keymanager.KeyManager;
 
 const Ext = function Ext(){
     let self = this;
@@ -33,6 +34,11 @@ const Ext = function Ext(){
 
     self.enabled = false;
     self.calling = false;
+    self.enable_keybindings = undefined;
+    self.tile_left_accel = undefined;
+    self.tile_right_accel = undefined;
+    self.tile_top_accel = undefined;
+    self.tile_bottom_accel = undefined;
 
     self.workspaces = {};
     self.windows = {};
@@ -40,6 +46,7 @@ const Ext = function Ext(){
 
     self._shellwm = global.window_manager;
     self._wsmgr = Compatibility.get_workspace_manager();
+    self._shortcuts_binding_ids = [];
 
     self.connect_and_track = function (owner, subject, name, cb, realsubject){
         if (!realsubject) realsubject = subject;
@@ -130,6 +137,7 @@ const Ext = function Ext(){
         self.enable_edge_tiling = self.settings.get_boolean("enable-edge-tiling");
         self.grouping_edge_tiling = self.settings.get_boolean("grouping-edge-tiling");
         self.edge_zone_width = self.settings.get_int("edge-zone-width");
+        self.enable_keybindings = self.settings.get_boolean("enable-keybindings");
     };
 
     self.current_display = function current_display(){
@@ -302,19 +310,9 @@ const Ext = function Ext(){
                     self.connect_and_track(self, self._shellwm, 'minimize', Lang.bind(self, on_window_minimize));
                 }
 
-
-
-                self.keyManager = new KeyManager()
-
-                var addAccelerator = function (acc, id){
-                    self.keyManager.listenFor(acc, function (){
-                        self.on_accelerator(id);
-                    })
+                if(self.enable_keybindings){
+                    self.bind_shortcuts();
                 }
-                //addAccelerator("<super>Left","left");
-                //addAccelerator("<super>Right","right");
-                //addAccelerator("<super>Up","up");
-                //addAccelerator("<super>Down","down");
 
                 OverviewModifier.register(self);
             }
@@ -323,6 +321,39 @@ const Ext = function Ext(){
         } catch (e){
             if (self.log.is_error()) self.log.error(e);
         }
+    }
+
+    self.bind_shortcuts = function (){
+        if(!Main.wm.addKeybinding) return;
+        self.unbind_shortcuts();
+        let accelerators = Prefs.getAccelerators();
+        accelerators.forEach((v)=>{
+            self.bind_shortcut(v, ()=>{self.on_accelerator(v)});
+        })
+    },
+
+    self.unbind_shortcuts = function (){
+        if(!Main.wm.removeKeybinding) return;
+        self._shortcuts_binding_ids.forEach(
+            (id) => Main.wm.removeKeybinding(id)
+        );
+
+        self._shortcuts_binding_ids = [];
+    }
+
+    self.bind_shortcut = function(name, cb){
+        var ModeType = Shell.hasOwnProperty('ActionMode') ?
+            Shell.ActionMode : Shell.KeyBindingMode;
+
+        Main.wm.addKeybinding(
+            name,
+            self.settings,
+            Meta.KeyBindingFlags.NONE,
+            ModeType.ALL,
+            Lang.bind(self, cb)
+        );
+
+        self._shortcuts_binding_ids.push(name);
     }
 
     self.on_accelerator = function (accel){
@@ -632,6 +663,7 @@ const Ext = function Ext(){
             self.keybindingSettings.reset("unmaximize");
             self.keybindingSettingsMutter.reset("toggle-tiled-left");
             self.keybindingSettingsMutter.reset("toggle-tiled-right");
+            self.unbind_shortcuts();
             //if(self.log.is_debug()) self.log.debug("ShellTile disabled");
 
         } catch (e){

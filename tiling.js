@@ -908,20 +908,21 @@ var DefaultTilingStrategy = function (ext){
 
     this.on_accelerator = function (accel){
         var meta_window = Compatibility.get_display().focus_window;
+        if(accel) accel = accel.slice(5);
         if (!meta_window) return;
 
         var me = this;
         var hasLastCode = !!me.lastCode;
         var win = this.extension.get_window(meta_window, true);
-        var preview_rect = this.get_edge_preview(win, accel);
+        var position = this.get_accelerator_position(accel);
+        var preview_rect = this.get_edge_preview(win, position);
 
-        var apply = function (preview_rect){
-            if (preview_rect.maximize) win.maximize();
-            else {
-                if (win.group){
-                    win.group.detach(win);
-                }
-                win.unmaximize();
+        var apply = function (preview_rect, position){
+            me.detach_window(win);
+            win.unmaximize();
+            if(me.extension.grouping_edge_tiling){
+                me.get_edge_tiling(win, position, false);
+            } else {
                 win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);
             }
         }
@@ -932,7 +933,7 @@ var DefaultTilingStrategy = function (ext){
 
                 me.__accelerator_timeout = Mainloop.timeout_add(DefaultTilingStrategy.ACCELERATOR_TIMEOUT + 10, function (){
                     if (!me.__accelerator_timeout) return;
-                    apply(preview_rect);
+                    apply(preview_rect, position);
                     Mainloop.source_remove(me.__accelerator_timeout);
                     delete me.__accelerator_timeout;
                 });
@@ -941,7 +942,7 @@ var DefaultTilingStrategy = function (ext){
 
                 Mainloop.source_remove(me.__accelerator_timeout);
                 delete me.__accelerator_timeout;
-                apply(preview_rect);
+                apply(preview_rect, position);
 
             }
 
@@ -1297,12 +1298,31 @@ var DefaultTilingStrategy = function (ext){
         return Main.layoutManager.currentMonitor.index;
     }
 
-    this.get_window_under = function (win, include_fakes){
+    this.get_position_rect = function(win, position){
+        let maximized_bounds = win.get_maximized_bounds();
+        let original_maximized_bounds = win.get_maximized_bounds();
+        maximized_bounds.x = maximized_bounds.x + Math.trunc(maximized_bounds.width / 2);
+        maximized_bounds.y = maximized_bounds.y + Math.trunc(maximized_bounds.height / 2);
+        maximized_bounds.width = 1;
+        maximized_bounds.height = 1;
+        if(position.is_left) maximized_bounds.x = original_maximized_bounds.x;
+        if(position.is_right) maximized_bounds.x = original_maximized_bounds.x + original_maximized_bounds.width - 1;
+        if(position.is_top) maximized_bounds.y = original_maximized_bounds.y;
+        if(position.is_bottom) maximized_bounds.y = original_maximized_bounds.y + original_maximized_bounds.height - 1;
+        return maximized_bounds;
+    }
+
+    this.get_window_under = function (win, include_fakes, position){
         var workspace = win.get_workspace();
         var workspace_windows = workspace.meta_windows();
 
-        var cursor_rect = this.get_cursor_rect();
-        var cursor_monitor = this.get_cursor_monitor();
+        if(!position){
+            var cursor_rect = this.get_cursor_rect();
+            var cursor_monitor = this.get_cursor_monitor();
+        } else {
+            var cursor_rect = this.get_position_rect(win, position);
+            var cursor_monitor = win.get_monitor();
+        }
         //if(this.log.is_debug()) this.log.debug("cursor_monitor: " + cursor_monitor);
 
         var topmost = undefined;
@@ -1375,7 +1395,8 @@ var DefaultTilingStrategy = function (ext){
 
     this.get_edge_tiling = function (win, position, preview){
 
-        var window_under = this.get_window_under(win, true);
+        var window_under = this.get_window_under(win, true, 
+            position.for_accelerator ? position : undefined);
 
         if (preview){
             win = new FakeWindow(this.extension, win);
@@ -1617,7 +1638,43 @@ var DefaultTilingStrategy = function (ext){
         return win;
     }
 
-    this.get_edge_preview = function (win, code, tiling){
+    this.get_accelerator_position = function(code){
+        var is_top = code == "up";
+        var is_bottom = code == "down";
+        var is_left = code == "left";
+        var is_right = code == "right";
+
+        var now = new Date().getTime();
+        if (this.lastCodeTime && (now - this.lastCodeTime) < DefaultTilingStrategy.ACCELERATOR_TIMEOUT){
+            if (this.lastCode == "up"){
+                if (!is_bottom) is_top = true;
+            }
+            if (this.lastCode == "down"){
+                if (!is_top) is_bottom = true;
+            }
+            if (this.lastCode == "left"){
+                if (!is_right) is_left = true;
+            }
+            if (this.lastCode == "right"){
+                if (!is_left) is_right = true;
+            }
+
+            delete this.lastCodeTime;
+            delete this.lastCode;
+        } else {
+            this.lastCodeTime = now
+            this.lastCode = code;
+        }
+        return  {
+            is_left: is_left,
+            is_right: is_right,
+            is_top: is_top,
+            is_bottom: is_bottom,
+            for_accelerator: true
+        }
+    }
+
+    this.get_edge_preview = function (win, position, tiling){
         if (!this.extension.enable_edge_tiling){
             return null;
         }
@@ -1654,43 +1711,11 @@ var DefaultTilingStrategy = function (ext){
             height: monitor_geometry.height
         });
 
-        if (code){
-            var percent = 0.5;
-            var is_top = code == "up"
-            var is_bottom = code == "down"
-            var is_left = code == "left"
-            var is_right = code == "right"
-            var now = new Date().getTime();
-            if (this.lastCodeTime && (now - this.lastCodeTime) < DefaultTilingStrategy.ACCELERATOR_TIMEOUT){
-                if (this.lastCode == "up"){
-                    if (is_top) percent = 0.3;
-                    else if (is_left) percent = 0;
-                    else if (is_right) percent = 1;
-                    if (!is_bottom) is_top = true;
-                }
-                if (this.lastCode == "down"){
-                    if (is_left) percent = 0;
-                    else if (is_right) percent = 1;
-                    if (!is_top) is_bottom = true;
-                }
-                if (this.lastCode == "left"){
-                    if (is_top) percent = 0;
-                    else if (is_bottom) percent = 0;
-                    if (!is_right) is_left = true;
-                }
-                if (this.lastCode == "right"){
-                    if (is_top) percent = 1;
-                    else if (is_bottom) percent = 1;
-                    if (!is_left) is_right = true;
-                }
-
-                delete this.lastCodeTime;
-                delete this.lastCode;
-            } else {
-                this.lastCodeTime = now
-                this.lastCode = code;
-            }
-
+        if (position){
+            var is_top = position.is_top;
+            var is_bottom = position.is_bottom;
+            var is_left = position.is_left;
+            var is_right = position.is_right;
         } else {
             var is_top = top_zone.contains_rect(cursor_rect);
             var is_bottom = bottom_zone.contains_rect(cursor_rect);
@@ -1700,7 +1725,7 @@ var DefaultTilingStrategy = function (ext){
         var is_top_or_bottom = is_top || is_bottom;
         var is_left_or_right = is_left || is_right;
 
-        if (!code){
+        if (!position){
             var percent = null;
             if (is_top_or_bottom){
 
@@ -1711,6 +1736,11 @@ var DefaultTilingStrategy = function (ext){
                 var percent = (cursor_rect.y - monitor_geometry.y) / monitor_geometry.height;
 
             }
+        } else {
+            var percent = 0.3;
+            if(is_top_or_bottom && is_left_or_right){
+                percent = is_left ? 0.1 : 0.9;
+            } 
         }
 
         if (percent != null){
