@@ -1,14 +1,14 @@
 # Russian translation for shelltile.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the ShellTile package.
-# vantu5z <vantu5z@mail.ru>, 2018.
+# vantu5z <vantu5z@mail.ru>, 2018-2020.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ShellTile\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-08-22 21:00+0200\n"
-"PO-Revision-Date: 2018-05-25 08:33+0300\n"
+"PO-Revision-Date: 2020-01-18 17:52+0300\n"
 "Last-Translator: vantu5z <vantu5z@mail.ru>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -22,9 +22,8 @@ msgid "Enable edge tiling"
 msgstr "Включить выравнивание по сторонам"
 
 #: prefs.js:27
-#, fuzzy
 msgid "Grouping edge tiling"
-msgstr "Включить выравнивание по сторонам"
+msgstr "Группировка при выравнивании по сторонам"
 
 #: prefs.js:31
 msgid "Keep the window group maximized"
@@ -40,11 +39,11 @@ msgstr "Размер отступов между окнами"
 
 #: prefs.js:46
 msgid "Size of active edge tiling zone"
-msgstr ""
+msgstr "Размер активной зоны для выравнивания по сторонам"
 
 #: prefs.js:53
 msgid "Key to hold for tiling"
-msgstr "Зажимать клавишу для тайлинга"
+msgstr "Удерживаемая клавиша для выравнивания по сторонам"
 
 #: prefs.js:122
 msgid "Ctrl or Super"
