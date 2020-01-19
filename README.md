@@ -1,7 +1,5 @@
 # ShellTile
 
-*Hi, if you like the extension take a look at my Linkedin profile: https://www.linkedin.com/in/emanuele-sabellico-2bb53016/*
-
 A tiling window extension for GNOME Shell. Just move a window over another one, holding down the Control key, and you'll see the magic! Grouped windows minimize, resize, raise and change workspace together. Maximize a window to remove it from the group.
 
 ### New feature! Grouping edge tiling
@@ -13,6 +11,15 @@ A video is the best way to explain it:
 **Detailed explanation:**
 
 Before when using the screen borders only a move and resize was made, instead if holding Ctrl you could group windows together. Now you can still group windows with Ctrl, but they are grouped when you use the screen borders too (if a valid tiling can be generated with the topmost window already edge-tiled). You can disable the new behavior in the extension setting.
+
+**Keyboard accelerators:**
+
+Default keyboard accelerators that can be joined for quarter tiling:
+
+* &lt;Ctrl&gt;&lt;Super&gt;J : Tile to the left border
+* &lt;Ctrl&gt;&lt;Super&gt;L : Tile to the right border
+* &lt;Ctrl&gt;&lt;Super&gt;I : Tile to the top border
+* &lt;Ctrl&gt;&lt;Super&gt;K : Tile to the bottom border
 
 ### Example of tiling with multiple windows (holding CTRL)
 
