@@ -16,10 +16,10 @@ Before when using the screen borders only a move and resize was made, instead if
 
 Default keyboard accelerators that can be joined for quarter tiling:
 
-* &lt;Ctrl&gt;&lt;Super&gt;J : Tile to the left border
-* &lt;Ctrl&gt;&lt;Super&gt;L : Tile to the right border
-* &lt;Ctrl&gt;&lt;Super&gt;I : Tile to the top border
-* &lt;Ctrl&gt;&lt;Super&gt;K : Tile to the bottom border
+* &lt;Ctrl&gt;&lt;Super&gt;Left : Tile to the left border
+* &lt;Ctrl&gt;&lt;Super&gt;Right : Tile to the right border
+* &lt;Ctrl&gt;&lt;Super&gt;Up : Tile to the top border
+* &lt;Ctrl&gt;&lt;Super&gt;Down : Tile to the bottom border
 
 ### Example of tiling with multiple windows (holding CTRL)
 

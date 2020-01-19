@@ -43,25 +43,25 @@
         <description>Enable the extension keybindings</description>
     </key>
     <key name="tile-left" type="as">
-      <default><![CDATA[['<Ctrl><Super>j']]]></default>
+      <default><![CDATA[['<Ctrl><Super>Left']]]></default>
       <summary>Tile to the left edge</summary>
       <description>
       </description>
     </key>
     <key name="tile-right" type="as">
-      <default><![CDATA[['<Ctrl><Super>l']]]></default>
+      <default><![CDATA[['<Ctrl><Super>Right']]]></default>
       <summary>Tile to the right edge</summary>
       <description>
       </description>
     </key>
     <key name="tile-up" type="as">
-      <default><![CDATA[['<Ctrl><Super>i']]]></default>
+      <default><![CDATA[['<Ctrl><Super>Up']]]></default>
       <summary>Tile to the top edge</summary>
       <description>
       </description>
     </key>
     <key name="tile-down" type="as">
-      <default><![CDATA[['<Ctrl><Super>k']]]></default>
+      <default><![CDATA[['<Ctrl><Super>Down']]]></default>
       <summary>Tile to the bottom edge</summary>
       <description>
       </description>
