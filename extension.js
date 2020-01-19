@@ -326,10 +326,12 @@ const Ext = function Ext(){
     self.bind_shortcuts = function (){
         if(!Main.wm.addKeybinding) return;
         self.unbind_shortcuts();
-        let accelerators = Prefs.getAccelerators();
-        accelerators.forEach((v)=>{
-            self.bind_shortcut(v, ()=>{self.on_accelerator(v)});
-        })
+        if(self.enable_keybindings){
+            let accelerators = Prefs.getAccelerators();
+            accelerators.forEach((v)=>{
+                self.bind_shortcut(v, ()=>{self.on_accelerator(v)});
+            })
+        }
     },
 
     self.unbind_shortcuts = function (){
@@ -417,6 +419,7 @@ const Ext = function Ext(){
         self.on_settings_changed.automatic = true;
         self.load_settings();
         self.remove_default_keybindings();
+        self.bind_shortcuts();
         delete self.on_settings_changed.automatic;
     }
 
