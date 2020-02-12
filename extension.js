@@ -29,8 +29,6 @@ const Ext = function Ext(){
     self.gnome_shell_settings = Convenience.getSettings(OVERRIDE_SCHEMA);
     self.gnome_mutter_settings = Convenience.getSettings(MUTTER_SCHEMA);
     self.settings = Convenience.getSettings();
-    self.keybindingSettings = Convenience.getSettings(KEYBINDING_SCHEMA);
-    self.keybindingSettingsMutter = Convenience.getSettings(KEYBINDING_SCHEMA_MUTTER);
 
     self.enabled = false;
     self.calling = false;
@@ -295,8 +293,6 @@ const Ext = function Ext(){
 
                 self.connect_and_track(self, self.gnome_shell_settings, 'changed', Lang.bind(this, this.on_settings_changed));
                 self.connect_and_track(self, self.gnome_mutter_settings, 'changed', Lang.bind(this, this.on_settings_changed));
-                self.connect_and_track(self, self.keybindingSettings, 'changed', Lang.bind(this, this.on_settings_changed));
-                self.connect_and_track(self, self.keybindingSettingsMutter, 'changed', Lang.bind(this, this.on_settings_changed));
                 self.connect_and_track(self, self.settings, 'changed', Lang.bind(this, this.on_settings_changed));
                 self.connect_and_track(self, self.screen, 'window-entered-monitor', Lang.bind(this, on_window_entered_monitor));
                 self.connect_and_track(self, self.display, 'window_created', Lang.bind(this, on_window_create));
@@ -662,10 +658,6 @@ const Ext = function Ext(){
             self.enabled = false;
             self.gnome_shell_settings.reset("edge-tiling");
             self.gnome_mutter_settings.reset("edge-tiling");
-            self.keybindingSettings.reset("maximize");
-            self.keybindingSettings.reset("unmaximize");
-            self.keybindingSettingsMutter.reset("toggle-tiled-left");
-            self.keybindingSettingsMutter.reset("toggle-tiled-right");
             self.unbind_shortcuts();
             //if(self.log.is_debug()) self.log.debug("ShellTile disabled");
 
