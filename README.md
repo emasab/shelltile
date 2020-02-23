@@ -1,6 +1,6 @@
 # ShellTile
 
-A tiling window extension for GNOME Shell. Just move a window over another one, holding down the Control key, and you'll see the magic! Grouped windows minimize, resize, raise and change workspace together. Maximize a window to remove it from the group.
+A tiling window extension for GNOME Shell. Just move a window to the edges of the screen to create a tiling, otherwise move a window over another one, holding down the Control key. Grouped windows minimize, resize, raise and change workspace together. Move or maximize a window to remove it from the group.
 
 ### New feature! Grouping edge tiling
 
