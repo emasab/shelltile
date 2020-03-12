@@ -1,0 +1,71 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-01-19 12:33+0100\n"
+"PO-Revision-Date: 2020-03-12 18:02+0100\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.3\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: nl\n"
+
+#: prefs.js:23
+msgid "Enable edge tiling"
+msgstr "Randstapeling inschakelen"
+
+#: prefs.js:27
+msgid "Grouping edge tiling"
+msgstr "Gegroepeerde randstapeling"
+
+#: prefs.js:31
+msgid "Keep the window group maximized"
+msgstr "Venstergroep altijd maximaliseren"
+
+#: prefs.js:35
+msgid "Adjust the split percentage with the mouse while tiling"
+msgstr "Pas het splitspercentage tijdens het stapelen aan met de muis"
+
+#: prefs.js:39
+msgid "Size of the gaps between the windows"
+msgstr "Ruimte tussen vensters"
+
+#: prefs.js:46
+msgid "Size of active edge tiling zone"
+msgstr "Grootte van actief randstapelingsgebied"
+
+#: prefs.js:53
+msgid "Key to hold for tiling"
+msgstr "Toets om te stapelen"
+
+#: prefs.js:57
+msgid "Enable keybindings"
+msgstr "Sneltoetsen gebruiken"
+
+#: prefs.js:61
+msgid "Tile to the left edge"
+msgstr "Stapelen aan linkerrand"
+
+#: prefs.js:65
+msgid "Tile to the right edge"
+msgstr "Stapelen aan rechterrand"
+
+#: prefs.js:69
+msgid "Tile to the top edge"
+msgstr "Stapelen aan bovenste rand"
+
+#: prefs.js:73
+msgid "Tile to the bottom edge"
+msgstr "Stapelen aan onderste rand"
+
+#: prefs.js:160
+msgid "Ctrl or Super"
+msgstr "Ctrl of Super"
