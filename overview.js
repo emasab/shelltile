@@ -225,6 +225,7 @@ const OverviewModifierBase = function (){
 
             let first = group.first;
             let second = group.second;
+            let secondOuterRect = second.outer_rect();
             let x, y, width, height, x1, y1;
 
             if (group.type == WindowGroup.HORIZONTAL_GROUP){
@@ -241,8 +242,10 @@ const OverviewModifierBase = function (){
                     height: height
                 });
 
-                x = x + width + scaled_gap;
-                width = rect.x + rect.width - x;
+                var scaledWidth = secondOuterRect.width * scale;
+
+                x = x + rect.width - scaledWidth;
+                width = scaledWidth;
 
                 var second_scaled = new Meta.Rectangle({
                     x: x,
@@ -265,8 +268,10 @@ const OverviewModifierBase = function (){
                     height: height
                 });
 
-                y = y + height + scaled_gap;
-                height = rect.y + rect.height - y;
+                var scaledHeight = secondOuterRect.height * scale;
+
+                y = y + rect.height - scaledHeight;
+                height = scaledHeight;
 
                 var second_scaled = new Meta.Rectangle({
                     x: x,
