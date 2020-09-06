@@ -28,7 +28,7 @@
       <description>You can reduce the default size of the gaps between the windows</description>
     </key>
     <key type="i" name="edge-zone-width">
-      <default>1</default>
+      <default>40</default>
       <summary>Size of active edge tiling zone</summary>
       <description>Expecially useful for multiple monitors users</description>
     </key>    
