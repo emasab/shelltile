@@ -2,7 +2,7 @@
 
 A tiling window extension for GNOME Shell. Just move a window to the edges of the screen to create a tiling, otherwise move a window over another one, holding down the Control key. Grouped windows minimize, resize, raise and change workspace together. Move or maximize a window to remove it from the group.
 
-*WARNING: doesn't work with Wayland yet.*
+*WARNING: doesn't work with Wayland yet. Follow up: https://github.com/emasab/shelltile/issues/98*
 
 ### Grouping edge tiling
 
