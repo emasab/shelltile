@@ -164,6 +164,7 @@ Window.prototype = {
     
     move_resize: function (x, y, w, h){
         this.meta_window.move_resize_frame(true, x, y, w, h);
+        this.meta_window.move_frame(true, x, y);
         if (!this.saved_position) this.saved_position = {};
         if (!this.saved_size) this.saved_size = {};
         this.saved_position.x = x;
