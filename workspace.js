@@ -17,7 +17,7 @@ Workspace.prototype = {
         this.meta_workspace = meta_workspace;
         this.extension = ext;
         this.strategy = strategy
-
+        this.log.debug(this.toString());
         this.meta_windows().map(Lang.bind(this, function (win){
             this.extension.on_window_create(null, win);
         }));

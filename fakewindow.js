@@ -84,6 +84,8 @@ FakeWindow.prototype = {
         this.w = w;
         this.h = h;
     },
+
+    resolve_promises: function(descending){},
     
     get_title: function (){
         return this.id();

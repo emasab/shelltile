@@ -28,6 +28,8 @@ Window.prototype = {
         this.extension = ext;
         this.log = Log.getLogger("Window");
         this.group = null;
+        this.move_promises = [];
+        this.resize_promises = [];
     },
     
     bring_to_front: function (){
@@ -116,7 +118,7 @@ Window.prototype = {
         )
     },
     
-    on_move_to_workspace: function (workspace){
+    on_move_to_workspace: async function (workspace){
 
         delete this.marked_for_remove;
 
@@ -124,17 +126,17 @@ Window.prototype = {
             this.group.move_to_workspace(workspace);
             var group = this.group.get_topmost_group();
             if (this.extension.keep_maximized){
-                group.maximize_size();
+                await group.maximize_size();
             }
             group.raise();
             group.save_bounds();
         }
     },
     
-    on_move_to_monitor: function (metaScreen, monitorIndex){
+    on_move_to_monitor: async function (metaScreen, monitorIndex){
         delete this.marked_for_remove;
         if (this.group){
-            this.update_geometry(true, false);
+            await this.update_geometry(true, false);
         }
     },
     
@@ -161,16 +163,82 @@ Window.prototype = {
         this.meta_window.move_to_monitor(idx);
         delete this.marked_for_remove;
     },
+
+    create_promise: function(){
+        var tmp = {};
+        var ret = new Promise((resolve, reject) => {
+            Object.assign(tmp, {resolve: resolve, reject: reject});
+        })
+        Object.assign(ret, tmp);
+        return ret;
+    },
+
+    next_move: function(){
+        const move_promise = this.create_promise()
+        move_promise.catch(()=>{})
+        this.move_promises.push(move_promise);
+        return move_promise;
+    },
+
+    next_resize: function(){
+        const resize_promise = this.create_promise()
+        resize_promise.catch(()=>{})
+        this.resize_promises.push(resize_promise);
+        return resize_promise;
+    },
     
-    move_resize: function (x, y, w, h){
-        this.meta_window.move_resize_frame(true, x, y, w, h);
-        this.meta_window.move_frame(true, x, y);
-        if (!this.saved_position) this.saved_position = {};
-        if (!this.saved_size) this.saved_size = {};
+    move_resize: async function (x, y, w, h){
+        let outer_rect = this.outer_rect();
+        if (!this.saved_position) {
+            this.saved_position = {x: outer_rect.x, y: outer_rect.y};
+        }
+        if (!this.saved_size) {
+            this.saved_size = {width: outer_rect.width, height: outer_rect.height};
+        }
+        const is_move = x !== outer_rect.x ||
+                        y !== outer_rect.y;
+        const is_resize = w !== outer_rect.width || 
+                        h !== outer_rect.height;
+
         this.saved_position.x = x;
         this.saved_position.y = y;
         this.saved_size.width = w;
         this.saved_size.height = h;
+
+        const promises = [];
+        if(is_move) {
+            const move_promise = this.next_move();
+            promises.push(move_promise);
+            this.meta_window.move_frame(true, x, y);
+        }
+        if(is_resize) {
+            const resize_promise = this.next_resize()
+            promises.push(resize_promise);
+            this.meta_window.move_resize_frame(true, x, y, w, h);
+        }
+        
+        return Promise.all(promises);
+    },
+
+    resolve_move_promises: function(descending){
+        /*if(descending || !this.group) {
+            this.log.debug("resolve_promises"+this.toString());
+            this.promises.map(p => p.resolve(null));
+            this.promises = [];
+        } else if(this.group) {
+            this.group.resolve_promises(false);
+        }*/
+        if(this.move_promises.length) this.log.debug("resolve_move_promises "+this.toString());
+        this.move_promises.map(p => p.resolve(null));
+        this.move_promises = [];
+        this.log.debug("resize promises remaining "+this.resize_promises.length);
+    },
+
+    resolve_resize_promises: function(descending){
+        if(this.resize_promises.length) this.log.debug("resolve_resize_promises "+this.toString());
+        this.resize_promises.map(p => p.resolve(null));
+        this.resize_promises = [];
+        this.log.debug("move promises remaining "+this.move_promises.length);
     },
     
     get_title: function (){
@@ -314,6 +382,10 @@ Window.prototype = {
         return ret;
 
     },
+
+    has_position_size_changed: function () {
+        return this.get_modified_edges(this.saved_size, this.outer_rect());
+    },
     
     get_modified_edges: function (saved_size, current_size){
 
@@ -348,7 +420,7 @@ Window.prototype = {
 
     },
     
-    update_geometry: function (changed_position, changed_size){
+    update_geometry: async function (changed_position, changed_size){
         if (this.group){
 
             var same_size = true;
@@ -404,9 +476,9 @@ Window.prototype = {
 
 
             if (same_size){
-                this.group.update_geometry(this);
+                await this.group.update_geometry(this);
             } else {
-                group.move_resize(group.saved_position.x, group.saved_position.y, group.saved_size.width, group.saved_size.height);
+                await group.move_resize(group.saved_position.x, group.saved_position.y, group.saved_size.width, group.saved_size.height);
                 group.save_bounds();
                 group.forget_last_bounds();
             }

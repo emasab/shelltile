@@ -70,26 +70,26 @@ var WindowGroup = function (first, second, type, splitPercent){
         else return this.second.get_workspace();
     }
 
-    this.maximize_size = function (cursor){
+    this.maximize_size = async function (cursor){
         var bounds = this.get_maximized_bounds(cursor);
-        this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
+        return this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 
-    this.switch_maximized = function (){
+    this.switch_maximized = async function (){
 
         if (this._last_bounds){
-            this.unmaximize();
+            return await this.unmaximize();
         } else {
-            this.maximize();
+            return await this.maximize();
         }
 
     }
 
-    this.maximize = function (){
+    this.maximize = async function (){
 
         this.forget_last_bounds();
         this._last_bounds = this.outer_rect();
-        this.maximize_size();
+        await this.maximize_size();
         this.save_bounds();
     }
 
@@ -97,12 +97,12 @@ var WindowGroup = function (first, second, type, splitPercent){
         return false;
     }
 
-    this.unmaximize = function (){
+    this.unmaximize = async function (){
 
         if (this._last_bounds){
 
             var bounds = this._last_bounds;
-            this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
+            await this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
             this.save_bounds();
 
         }
@@ -230,13 +230,16 @@ var WindowGroup = function (first, second, type, splitPercent){
 
     }
 
-    this.update_geometry = function (win){
-
+    this.update_geometry = async function (win){
+        this.log.debug("update_geometry" + this);
         if (win){
 
             var first_rect = this.first.outer_rect();
             var second_rect = this.second.outer_rect();
             var win_rect = win === this.first ? first_rect : second_rect;
+
+            this.log.debug("first_rect: " + [first_rect.x, first_rect.y, first_rect.width, first_rect.height]);
+            this.log.debug("second_rect: " + [second_rect.x, second_rect.y, second_rect.width, second_rect.height]);
 
             if (this.type == WindowGroup.HORIZONTAL_GROUP){
 
@@ -267,8 +270,8 @@ var WindowGroup = function (first, second, type, splitPercent){
                 }
             }
 
-            this.first.move_resize(first_rect.x, first_rect.y, first_rect.width, first_rect.height);
-            this.second.move_resize(second_rect.x, second_rect.y, second_rect.width, second_rect.height);
+            await this.first.move_resize(first_rect.x, first_rect.y, first_rect.width, first_rect.height);
+            await this.second.move_resize(second_rect.x, second_rect.y, second_rect.width, second_rect.height);
 
             var bounds = this.outer_rect();
 
@@ -283,10 +286,10 @@ var WindowGroup = function (first, second, type, splitPercent){
 
             this.update_split_percent(bounds, win);
 
-            this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
+            await this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
 
         }
-        if (this.group) this.group.update_geometry(this);
+        if (this.group) await this.group.update_geometry(this);
         else {
 
             var saved_position = this.saved_position;
@@ -303,19 +306,19 @@ var WindowGroup = function (first, second, type, splitPercent){
                 bounds.height = saved_size.height;
             }
 
-            this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
+            await this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
         }
         var bounds = this.outer_rect();
         this.update_split_percent(bounds, win);
 
         if (this.splitPercent <= 0.05 && !this.first.has_real_window()){
-            this.detach(this.first);
+            await this.detach(this.first);
         } else if (this.splitPercent >= 0.95 && !this.second.has_real_window()){
-            this.detach(this.second);
+            await this.detach(this.second);
         }
     }
 
-    this.move_resize = function (x, y, width, height){
+    this.move_resize = async function (x, y, width, height){
         if (x === undefined || y === undefined || width === undefined || height === undefined){
             return;
         }
@@ -342,10 +345,10 @@ var WindowGroup = function (first, second, type, splitPercent){
             second_y = first_y + first_height + this.gap_between_windows();
         }
 
-        //if(this.log.is_debug()) this.log.debug("first: " + [first_x, first_y, first_width, first_height])
-        this.first.move_resize(first_x, first_y, first_width, first_height);
+        if(this.log.is_debug()) this.log.debug("first: " + [first_x, first_y, first_width, first_height])
+        await this.first.move_resize(first_x, first_y, first_width, first_height);
         var first_rect = this.first.outer_rect();
-
+        
         if (first_rect.width > first_width || first_rect.height > first_height){
 
             if (this.type == WindowGroup.HORIZONTAL_GROUP){
@@ -369,8 +372,8 @@ var WindowGroup = function (first, second, type, splitPercent){
             }
         }
 
-        //if(this.log.is_debug()) this.log.debug("second: " + [second_x, second_y, second_width, second_height])
-        this.second.move_resize(second_x, second_y, second_width, second_height);
+        if(this.log.is_debug()) this.log.debug("second: " + [second_x, second_y, second_width, second_height])
+        await this.second.move_resize(second_x, second_y, second_width, second_height);
         var second_rect = this.second.outer_rect();
 
         if (second_rect.width > second_width || second_rect.height > second_height){
@@ -395,10 +398,10 @@ var WindowGroup = function (first, second, type, splitPercent){
                 }
             }
 
-            //if(this.log.is_debug()) this.log.debug("first1: " + [first_x, first_y, first_width, first_height])
-            this.first.move_resize(first_x, first_y, first_width, first_height);
-            //if(this.log.is_debug()) this.log.debug("second1: " + [second_x, second_y, second_width, second_height])
-            this.second.move_resize(second_x, second_y, second_width, second_height);
+            if(this.log.is_debug()) this.log.debug("first1: " + [first_x, first_y, first_width, first_height])
+            await this.first.move_resize(first_x, first_y, first_width, first_height);
+            if(this.log.is_debug()) this.log.debug("second1: " + [second_x, second_y, second_width, second_height])
+            await this.second.move_resize(second_x, second_y, second_width, second_height);
         }
     }
 
@@ -417,6 +420,15 @@ var WindowGroup = function (first, second, type, splitPercent){
             this.second.move_to_workspace(workspace);
         } else {
             this.second.move_to_workspace(workspace, true);
+        }
+    }
+
+    this.resolve_promises = function(descending){
+        if(descending || !this.group) {
+            this.first.resolve_promises(true);
+            this.second.resolve_promises(true);
+        } else if(this.group) {
+            this.group.resolve_promises(false);
         }
     }
 
@@ -465,17 +477,17 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.reposition = function (){
+    this.reposition = async function (){
 
         var group = this.get_topmost_group();
 
         var existing_size = group.outer_rect();
 
-        group.move_resize(existing_size.x, existing_size.y, existing_size.width, existing_size.height);
+        return group.move_resize(existing_size.x, existing_size.y, existing_size.width, existing_size.height);
 
     }
 
-    this.attach = function (win, replace, cursor){
+    this.attach = async function (win, replace, cursor){
 
         if (this.first.group){
             var withGroup = this.first;
@@ -504,18 +516,18 @@ var WindowGroup = function (first, second, type, splitPercent){
 
         if (replace){
             var to_detach = this.group.first === this ? this.group.second : this.group.first;
-            this.group.detach(to_detach);
+            await this.group.detach(to_detach);
         }
 
         var group = this.get_topmost_group();
 
         if (this.extension.keep_maximized){
 
-            group.maximize_size(cursor);
+            await group.maximize_size(cursor);
 
         } else {
 
-            group.move_resize(existing_size.x, existing_size.y, existing_size.width, existing_size.height);
+            await group.move_resize(existing_size.x, existing_size.y, existing_size.width, existing_size.height);
 
         }
 
@@ -550,7 +562,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         return curr;
     }
 
-    this.detach = function (win, noop, replace_with){
+    this.detach = async function (win, noop, replace_with){
         var other = this.first === win ? this.second : this.first;
         if (other && !other.has_real_window()) replace_with = null;
 
@@ -565,7 +577,7 @@ var WindowGroup = function (first, second, type, splitPercent){
             replace_with.group = this;
             if (!noop){
                 var group = this.get_topmost_group();
-                group.update_geometry();
+                await group.update_geometry();
             }
         } else if (this.group){
 
@@ -590,7 +602,7 @@ var WindowGroup = function (first, second, type, splitPercent){
             delete win.group;
             if (!noop){
                 var group = this.get_topmost_group();
-                group.update_geometry();
+                await group.update_geometry();
             }
             delete this.group;
             delete this.first;
@@ -605,7 +617,7 @@ var WindowGroup = function (first, second, type, splitPercent){
                 var maxi = this.first;
                 if (win === this.first) maxi = this.second;
 
-                maxi.maximize_size();
+                await maxi.maximize_size();
                 maxi.save_bounds();
             }
             delete this.first;
@@ -671,17 +683,17 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.clone = function (cursor){
+    this.clone = async function (cursor){
         if (!this.first.first){
             var first = new FakeWindow(this.extension, this.first.has_real_window() ? this.first : undefined);
-        } else var first = this.first.clone(cursor);
+        } else var first = await this.first.clone(cursor);
         if (!this.second.first){
             var second = new FakeWindow(this.extension, this.second.has_real_window() ? this.second : undefined);
-        } else var second = this.second.clone(cursor);
+        } else var second = await this.second.clone(cursor);
 
         var ret = new WindowGroup(first, second, this.type, this.splitPercent);
         ret.extension = this.extension;
-        ret.attach(undefined, undefined, cursor);
+        await ret.attach(undefined, undefined, cursor);
         return ret;
     }
 }
@@ -723,9 +735,6 @@ var DefaultTilingStrategy = function (ext){
     this.preview_for_edge_tiling = false;
     this.preview.visible = false;
     Main.uiGroup.add_actor(this.preview);
-    var default_modifier = Gdk.Keymap.get_default();
-
-
 
     this.is_ctrl_pressed = function (){
         //this.log.debug("Modifier key: " + this.extension.tile_modifier_key);
@@ -734,7 +743,8 @@ var DefaultTilingStrategy = function (ext){
             modifiers = Clutter.ModifierType.MOD4_MASK;
         if (this.extension.tile_modifier_key === 'Ctrl or Super')
             modifiers = modifiers | Clutter.ModifierType.MOD4_MASK;
-        var ret = default_modifier.get_modifier_state() & modifiers;
+        let [,,mods] = global.get_pointer();
+        var ret = mods & modifiers;
 
         if (ret){
             this.lastTimeCtrlPressed = new Date().getTime();
@@ -773,7 +783,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.on_window_move = function (win){
+    this.on_window_move = async function (win){
         //if(!win._dragging) return;
         //win.unmaximize();
         win.raise();
@@ -811,8 +821,10 @@ var DefaultTilingStrategy = function (ext){
                 var for_edge_tiling = !preview_rect;
                 if (for_edge_tiling){
 
-                    var preview_rect = this.get_edge_preview(win);
+                    var preview_rect = await this.get_edge_preview(win);
                 }
+
+                this.log.debug("preview_rect: " + preview_rect);
 
                 this.preview_for_edge_tiling = for_edge_tiling;
                 this.update_preview(preview_rect);
@@ -822,7 +834,7 @@ var DefaultTilingStrategy = function (ext){
                 this.extension._automatic_change = true;
                 if (!this._check_after_move) this._check_after_move = [];
                 this._check_after_move = this._check_after_move.concat([win.group.first, win.group.second]);
-                this.detach_window(win);
+                await this.detach_window(win);
                 win.raise();
                 delete this.extension._automatic_change;
 
@@ -845,7 +857,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.on_window_moved = function (win){
+    this.on_window_moved = async function (win){
 
         if (this.__timeout){
             Mainloop.source_remove(this.__timeout);
@@ -853,7 +865,7 @@ var DefaultTilingStrategy = function (ext){
         }
 
         if (win.group){
-            win.update_geometry(true, false);
+            await win.update_geometry(true, false);
             win.raise();
         } else {
 
@@ -874,27 +886,27 @@ var DefaultTilingStrategy = function (ext){
 
             if (group_preview){
 
-                if (win.group) win.group.detach(win);
+                if (win.group) await win.group.detach(win);
                 else {
                     win.before_group();
                     window_under.before_group();
                 }
 
                 var is_maximized = window_under.is_maximized();
-                window_under.unmaximize();
-                group_preview.attach(win);
+                await window_under.unmaximize();
+                await group_preview.attach(win);
                 if (is_maximized){
                     var topmost = group_preview.get_topmost_group();
-                    topmost.maximize_size();
+                    await topmost.maximize_size();
                 }
 
             } else {
 
-                var preview_rect = this.get_edge_preview(win, undefined, true);
+                var preview_rect = await this.get_edge_preview(win, undefined, true);
                 if (preview_rect){
                     if (!preview_rect.type){
-                        if (preview_rect.maximize) win.maximize();
-                        else win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);
+                        if (preview_rect.maximize) await win.maximize();
+                        else await win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);
                     }
                 } else if(win.has_moved_enough_for_detach()){
                     this.check_after_move(win);
@@ -906,7 +918,7 @@ var DefaultTilingStrategy = function (ext){
 
     }
 
-    this.on_accelerator = function (accel){
+    this.on_accelerator = async function (accel){
         var meta_window = Compatibility.get_display().focus_window;
         if(accel) accel = accel.slice(5);
         if (!meta_window) return;
@@ -915,15 +927,15 @@ var DefaultTilingStrategy = function (ext){
         var hasLastCode = !!me.lastCode;
         var win = this.extension.get_window(meta_window, true);
         var position = this.get_accelerator_position(accel);
-        var preview_rect = this.get_edge_preview(win, position);
+        var preview_rect = await this.get_edge_preview(win, position);
 
-        var apply = function (preview_rect, position){
-            me.detach_window(win);
-            win.unmaximize();
+        var apply = async function (preview_rect, position){
+            await me.detach_window(win);
+            await win.unmaximize();
             if(me.extension.grouping_edge_tiling){
-                me.get_edge_tiling(win, position, false);
+                await me.get_edge_tiling(win, position, false);
             } else {
-                win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);
+                await win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);
             }
         }
 
@@ -1024,12 +1036,13 @@ var DefaultTilingStrategy = function (ext){
         */
     }
 
-    this.on_window_resized = function (win){
-        win.update_geometry(false, true);
+    this.on_window_resized = async function (win){
+        this.log.debug("on_window_resized");
+        await win.update_geometry(false, true);
         this.on_window_resize(win);
     }
 
-    this.on_window_maximize = function (win){
+    this.on_window_maximize = async function (win){
         if (win.group){
 
             var ctrl_pressed = this.is_ctrl_pressed();
@@ -1039,15 +1052,15 @@ var DefaultTilingStrategy = function (ext){
                 if (this.is_shift_pressed()){
 
                     var topmost_group = win.group.get_topmost_group();
-                    win.unmaximize();
-                    topmost_group.switch_maximized();
+                    await win.unmaximize();
+                    await topmost_group.switch_maximized();
 
                 }
 
             } else {
 
                 win.check_after = true;
-                this.detach_window(win);
+                await this.detach_window(win);
                 //if(this.extension.keep_maximized) win.maximize_size();
 
             }
@@ -1056,12 +1069,12 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.on_window_unmaximize = function (win){
-        Mainloop.idle_add(Lang.bind(this, function(){
+    this.on_window_unmaximize = async function (win){
+        Mainloop.idle_add(Lang.bind(this, async function(){
             if (win.group){
                 var topmost_group = win.group.get_topmost_group();
                 topmost_group.unminimize(true);
-                topmost_group.reposition();
+                await topmost_group.reposition();
             } else {
                 if (win.check_after){
                     delete win.check_after;
@@ -1071,7 +1084,7 @@ var DefaultTilingStrategy = function (ext){
         }));
     }
 
-    this.detach_window = function (win){
+    this.detach_window = async function (win){
         if (win.group){
             var other = null;
             if (!win.group.group){
@@ -1082,23 +1095,23 @@ var DefaultTilingStrategy = function (ext){
             if (win.group.group && win.group.group.group) replacement = null;
             if (win.group.group && win.group.type == win.group.group.type) replacement = null;
 
-            win.group.detach(win, undefined, replacement);
+            await win.group.detach(win, undefined, replacement);
             if (!replacement && other && other.after_group){
                 other.after_group();
             }
         }
     }
 
-    this.on_window_remove = function (win){
+    this.on_window_remove = async function (win){
         if (win.marked_for_remove){
             //if(this.log.is_debug()) this.log.debug("detach window");
-            this.detach_window(win);
+            await this.detach_window(win);
         }
     }
 
-    this.on_window_minimize = function (win){
+    this.on_window_minimize = async function (win){
         if (win.group && !win.is_maximized()){
-            win.group.minimize(true);
+            await win.group.minimize(true);
         }
     }
 
@@ -1393,7 +1406,7 @@ var DefaultTilingStrategy = function (ext){
         return topmost;
     }
 
-    this.get_edge_tiling = function (win, position, preview){
+    this.get_edge_tiling = async function (win, position, preview){
 
         var window_under = this.get_window_under(win, true, 
             position.for_accelerator ? position : undefined);
@@ -1408,8 +1421,8 @@ var DefaultTilingStrategy = function (ext){
         if (preview && window_under){
             if (window_under.group){
                 var topmost_group = window_under.group.get_topmost_group();
-                var topmost_group_clone = topmost_group.clone(true);
-                topmost_group_clone.update_geometry();
+                var topmost_group_clone = await topmost_group.clone(true);
+                await topmost_group_clone.update_geometry();
                 //if(this.log.is_debug()) this.log.debug("topmost_group_clone " + topmost_group_clone);
                 window_under = WindowGroup.find_cloned_child(topmost_group, topmost_group_clone, window_under);
             }
@@ -1484,7 +1497,7 @@ var DefaultTilingStrategy = function (ext){
 
                 if (sibling_window && !opposite_window.has_real_window()){
 
-                    opposite_window.group.detach(opposite_window);
+                    await opposite_window.group.detach(opposite_window);
                     var new_type = top_group.type == WindowGroup.HORIZONTAL_GROUP ? WindowGroup.VERTICAL_GROUP : WindowGroup.HORIZONTAL_GROUP;
                     if (new_type == WindowGroup.VERTICAL_GROUP && position.is_top ||
                         new_type == WindowGroup.HORIZONTAL_GROUP && position.is_left){
@@ -1497,7 +1510,7 @@ var DefaultTilingStrategy = function (ext){
 
                     newgroup = new WindowGroup(first, second, new_type, other_side.splitPercent);
                     newgroup.extension = this.extension;
-                    newgroup.attach(undefined, undefined, true);
+                    await newgroup.attach(undefined, undefined, true);
 
                 } else if (rotate_half_screen){
 
@@ -1522,15 +1535,15 @@ var DefaultTilingStrategy = function (ext){
                     var newgroup_other_side_first = is_other_side_first ? newgroup_other_side_one : newgroup_other_side_two;
                     var newgroup_other_side_second = is_other_side_first ? newgroup_other_side_two : newgroup_other_side_one;
 
-                    if (other_side_first) other_side.detach(other_side_first, true);
-                    else if (other_side_second) other_side.detach(other_side_second, true);
-                    if (top_window_under_first) top_window_under.detach(top_window_under_first, true);
-                    else if (top_window_under_second) top_window_under.detach(top_window_under_second, true);
-                    top_group.detach(other_side, true);
+                    if (other_side_first) await other_side.detach(other_side_first, true);
+                    else if (other_side_second) await other_side.detach(other_side_second, true);
+                    if (top_window_under_first) await top_window_under.detach(top_window_under_first, true);
+                    else if (top_window_under_second) await top_window_under.detach(top_window_under_second, true);
+                    await top_group.detach(other_side, true);
 
                     var newgroup_other_side = new WindowGroup(newgroup_other_side_first, newgroup_other_side_second, top_group_type, top_group_splitPercent);
                     newgroup_other_side.extension = this.extension;
-                    newgroup_other_side.attach(undefined, undefined, true);
+                    await newgroup_other_side.attach(undefined, undefined, true);
 
                     var window_one = window_under;
                     var window_two = newgroup_other_side;
@@ -1540,7 +1553,7 @@ var DefaultTilingStrategy = function (ext){
 
                     newgroup = new WindowGroup(first, second, new_type, top_window_under_splitPercent || other_side_splitPercent);
                     newgroup.extension = this.extension;
-                    newgroup.attach(undefined, undefined, true);
+                    await newgroup.attach(undefined, undefined, true);
 
                 }
             }
@@ -1565,7 +1578,7 @@ var DefaultTilingStrategy = function (ext){
 
                 newgroup = new WindowGroup(first, second, new_type, splitPercent);
                 newgroup.extension = this.extension;
-                newgroup.attach(win, undefined, true);
+                await newgroup.attach(win, undefined, true);
 
             } else if (window_under.group &&
                 !(window_under.group.group && (is_top_or_bottom || is_left_or_right)) &&
@@ -1580,14 +1593,11 @@ var DefaultTilingStrategy = function (ext){
 
                 newgroup = new WindowGroup(first, second, window_under.group.type, window_under.group.splitPercent);
                 newgroup.extension = this.extension;
-                newgroup.attach(win, true, true);
-
-
+                await newgroup.attach(win, true, true);
 
             }
 
             if (newgroup){
-                //newgroup.maximize_size();
                 return preview ? win : newgroup.get_topmost_group();
             }
         }
@@ -1624,7 +1634,7 @@ var DefaultTilingStrategy = function (ext){
 
             var group = new WindowGroup(first, second, group_type, perc);
             group.extension = this.extension;
-            group.attach(win, undefined, true);
+            await group.attach(win, undefined, true);
             win = group;
         }
         orig_win.before_group();
@@ -1674,7 +1684,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.get_edge_preview = function (win, position, tiling){
+    this.get_edge_preview = async function (win, position, tiling){
         if (!this.extension.enable_edge_tiling){
             return null;
         }
@@ -1817,7 +1827,7 @@ var DefaultTilingStrategy = function (ext){
         }
 
         if (version310 && this.extension.grouping_edge_tiling && ret && !ret.maximize && !!this.extension.keep_maximized){
-            ret = this.get_edge_tiling(win, {
+            ret = await this.get_edge_tiling(win, {
                 is_top: is_top,
                 is_bottom: is_bottom,
                 is_left: is_left,

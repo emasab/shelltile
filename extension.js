@@ -287,10 +287,10 @@ const Ext = function Ext(){
                 var on_window_maximize = this.break_loops(this.on_window_maximize);
                 var on_window_unmaximize = this.break_loops(this.on_window_unmaximize);
                 var on_window_minimize = this.break_loops(this.on_window_minimize);
-                var on_window_size_change = this.break_loops(this.on_window_size_change);
-                var on_window_create = this.break_loops(this.on_window_create);
+                var on_window_manager_window_size_change = this.break_loops(this.on_window_manager_window_size_change);
                 var on_window_entered_monitor = this.break_loops(this.window_entered_monitor);
-
+                var on_window_create = this.on_window_create;
+                
                 self.connect_and_track(self, self.gnome_shell_settings, 'changed', Lang.bind(this, this.on_settings_changed));
                 self.connect_and_track(self, self.gnome_mutter_settings, 'changed', Lang.bind(this, this.on_settings_changed));
                 self.connect_and_track(self, self.settings, 'changed', Lang.bind(this, this.on_settings_changed));
@@ -298,7 +298,7 @@ const Ext = function Ext(){
                 self.connect_and_track(self, self.display, 'window_created', Lang.bind(this, on_window_create));
 
                 if (Util.versionCompare(undefined, "3.18") >= 0){
-                    self.connect_and_track(self, self._shellwm, 'size-change', Lang.bind(self, on_window_size_change));
+                    self.connect_and_track(self, self._shellwm, 'size-change', Lang.bind(self, on_window_manager_window_size_change));
                     self.connect_and_track(self, self._shellwm, 'minimize', Lang.bind(self, on_window_minimize));
                 } else {
                     self.connect_and_track(self, self._shellwm, 'maximize', Lang.bind(self, on_window_maximize));
@@ -359,8 +359,7 @@ const Ext = function Ext(){
         if (this.strategy && this.strategy.on_accelerator) this.strategy.on_accelerator(accel);
     }
 
-    self.on_window_create = function (display, meta_window, second_try){
-        //if(this.log.is_debug()) this.log.debug("window_created: " + meta_window);
+    self.on_window_create = async function (display, meta_window, second_try){
         let actor = meta_window.get_compositor_private();
         if (!actor){
             if (!second_try){
@@ -402,11 +401,11 @@ const Ext = function Ext(){
         //if(this.log.is_debug()) this.log.debug("window removed " + win);
     }
 
-    self.window_entered_monitor = function (metaScreen, monitorIndex, metaWin){
+    self.window_entered_monitor = async function (metaScreen, monitorIndex, metaWin){
         if (!this.enabled) return;
 
         var win = self.get_window(metaWin);
-        win.on_move_to_monitor(metaScreen, monitorIndex);
+        await win.on_move_to_monitor(metaScreen, monitorIndex);
     }
 
     self.on_settings_changed = function (){
@@ -419,31 +418,46 @@ const Ext = function Ext(){
         delete self.on_settings_changed.automatic;
     }
 
-    self.on_window_size_change = function (shellwm, actor){
+    self.on_window_position_changed = function (win){
+        if (!this.enabled) return;
+        win = this.get_window(win);
+
+        win.resolve_move_promises();
+    }
+
+    self.on_window_size_changed = function (win){
+        this.log.debug("window size change");
+        if (!this.enabled) return;
+        win = this.get_window(win);
+
+        win.resolve_resize_promises();
+    }
+
+    self.on_window_manager_window_size_change = async function (shellwm, actor){
         if (!this.enabled) return;
 
         var win = actor.get_meta_window();
         win = this.get_window(win);
 
         //if(this.log.is_debug()) this.log.debug("window size change");
-        if (win.is_maximized()) this.on_window_maximize(shellwm, actor);
+        if (win.is_maximized()) await this.on_window_maximize(shellwm, actor);
         else {
-            if (win.is_minimized()) this.on_window_minimize(shellwm, actor);
-            else this.on_window_unmaximize(shellwm, actor);
+            if (win.is_minimized()) await this.on_window_minimize(shellwm, actor);
+            else await this.on_window_unmaximize(shellwm, actor);
         }
     }
 
-    self.on_window_minimize = function (shellwm, actor){
+    self.on_window_minimize = async function (shellwm, actor){
         if (!this.enabled) return;
 
         var win = actor.get_meta_window();
         win = this.get_window(win);
-        if (this.strategy && this.strategy.on_window_minimize) this.strategy.on_window_minimize(win);
+        if (this.strategy && this.strategy.on_window_minimize) await this.strategy.on_window_minimize(win);
 
         //if(this.log.is_debug()) this.log.debug("window maximized " + win);
     }
 
-    self.on_window_maximize = function (shellwm, actor){
+    self.on_window_maximize = async function (shellwm, actor){
 
         //if(this.log.is_debug()) this.log.debug([shellwm, actor, actor.get_workspace()]);
 
@@ -456,92 +470,92 @@ const Ext = function Ext(){
             return;
         }
 
-        if (this.strategy && this.strategy.on_window_maximize) this.strategy.on_window_maximize(win);
+        if (this.strategy && this.strategy.on_window_maximize) await this.strategy.on_window_maximize(win);
         //if(this.log.is_debug()) this.log.debug("window maximized " + win);
     }
 
-    self.on_window_unmaximize = function (shellwm, actor){
+    self.on_window_unmaximize = async function (shellwm, actor){
         if (!this.enabled) return;
 
         var win = actor.get_meta_window();
         win = this.get_window(win);
 
-        if (this.strategy && this.strategy.on_window_unmaximize) this.strategy.on_window_unmaximize(win);
+        if (this.strategy && this.strategy.on_window_unmaximize) await this.strategy.on_window_unmaximize(win);
         //if(this.log.is_debug()) this.log.debug("window unmaximized " + win);
     }
 
-    self.on_workspace_changed = function (win, obj){
+    self.on_workspace_changed = async function (win, obj){
         win = this.get_window(win);
 
         if (!this.enabled){
-
-            if (win.group) win.group.detach(win, true);
+            if (win.group) await win.group.detach(win, true);
             return;
         }
 
         //if(this.log.is_debug()) this.log.debug("workspace_changed");
         var workspace = win.get_workspace();
         //if(this.log.is_debug()) this.log.debug("end workspace_changed");
-        if (win && workspace) win.on_move_to_workspace(workspace);
+        if (win && workspace) await win.on_move_to_workspace(workspace);
     }
 
-    self.on_window_raised = function (win){
+    self.on_window_raised = async function (win){
         if (!this.enabled) return;
 
         win = this.get_window(win);
-        if (this.strategy && this.strategy.on_window_raised) this.strategy.on_window_raised(win);
+        if (this.strategy && this.strategy.on_window_raised) await this.strategy.on_window_raised(win);
         //if(this.log.is_debug()) this.log.debug("window raised " + win);
     }
 
-    self.on_window_move = function (win){
+    self.on_window_move = async function (win){
         if (!this.enabled) return;
 
-        if (this.strategy && this.strategy.on_window_move) this.strategy.on_window_move(win);
+        if (this.strategy && this.strategy.on_window_move) await this.strategy.on_window_move(win);
         //if(this.log.is_debug()) this.log.debug("window move " + win.xpos() + "," + win.ypos());
     }
 
-    self.on_window_resize = function (win){
+    self.on_window_resize = async function (win){
         if (!this.enabled) return;
 
-        if (this.strategy && this.strategy.on_window_resize) this.strategy.on_window_resize(win);
+        if (this.strategy && this.strategy.on_window_resize) await this.strategy.on_window_resize(win);
         //if(this.log.is_debug()) this.log.debug("window resize");
     }
 
-    self.on_window_moved = function (win){
+    self.on_window_moved = async function (win){
         if (!this.enabled) return;
 
-        if (this.strategy && this.strategy.on_window_moved) this.strategy.on_window_moved(win);
+        if (this.strategy && this.strategy.on_window_moved) await this.strategy.on_window_moved(win);
         //if(this.log.is_debug()) this.log.debug("window moved");
     }
 
-    self.on_window_resized = function (win){
+    self.on_window_resized = async function (win){
         if (!this.enabled) return;
 
-        if (this.strategy && this.strategy.on_window_resized) this.strategy.on_window_resized(win);
-        //if(this.log.is_debug()) this.log.debug("window resized");
+        if (this.strategy && this.strategy.on_window_resized) await this.strategy.on_window_resized(win);
+        if(this.log.is_debug()) this.log.debug("window resized");
     }
 
     self.break_loops = function (func){
-        return function (){
+        func = func.bind(this);
+        const ret = async function (...args){
             if (this.calling === true) return;
-
             this.calling = true;
             try {
-                func.apply(this, arguments);
+                await func(...args);
             } finally {
                 this.calling = false;
             }
         }
+        return ret.bind(ret);
     }
 
     self.bind_to_window_change = function (win, actor){
 
         var requested_win_id = Window.get_id(win.meta_window);
             
-        var catch_errors = function(cb, win){
+        var catch_errors = async function(cb, win){
             if (cb){
                 try { 
-                    cb(win);
+                    await cb(win);
                 }
                 catch(e){
                     if(self.log.is_error()) self.log.error(e);
@@ -551,37 +565,35 @@ const Ext = function Ext(){
 
         return Lang.bind(this, function (relevant_grabs, cb, cb_final){
             var active = false;
-            var grab_begin = function (display, screen, window, grab_op){
+            var grab_begin = async function (display, screen, window, grab_op){
                 if(!window) return;
                 var win_id = Window.get_id(window);
                 if(requested_win_id!=win_id) return;
                 if (relevant_grabs.indexOf(grab_op) == -1) return;
                 active = true;
-
-                var repeat = function (){
+                while (active) {
+                    await catch_errors(cb, win);
                     if (!active) return;
                     grab_op = display.get_grab_op();
                     if (relevant_grabs.indexOf(grab_op) == -1){
-                        catch_errors(cb_final, win);
                         active = false;
+                        this.log.debug("grab_end2" + window);
+                        await catch_errors(cb_final, win);
                     }
                     if (active){
-                        catch_errors(cb, win);
-                        Mainloop.timeout_add(200, repeat);
+                        await new Promise((resolve) => Mainloop.timeout_add(200, resolve));
                     }
-                };
-                Mainloop.timeout_add(200, repeat);
-                catch_errors(cb, win);
+                }
             }
-            var grab_end = function (display, screen, window, grab_op){
+            var grab_end = async function (display, screen, window, grab_op){
                 if(!window) return;
                 var win_id = Window.get_id(window); 
                 if(requested_win_id!=win_id) return;
                 if (!active) return;
                 if (relevant_grabs.indexOf(grab_op) == -1) return;
-
-                catch_errors(cb_final, win);
+                this.log.debug("grab_end1" + window);
                 active = false;
+                await catch_errors(cb_final, win);
             }
 
 
@@ -642,14 +654,15 @@ const Ext = function Ext(){
         var on_window_resized = this.break_loops(this.on_window_resized);
         var on_window_raised = this.break_loops(this.on_window_raised);
         var on_workspace_changed = this.break_loops(this.on_workspace_changed);
-        var on_key_press = this.on_key_press;
-        var on_key_release = this.on_key_release;
-
+        var on_window_size_changed = this.on_window_size_changed;
+        var on_window_position_changed = this.on_window_position_changed;
 
         bind_to_window_change(move_ops, Lang.bind(this, on_window_move), Lang.bind(this, on_window_moved));
         bind_to_window_change(resize_ops, Lang.bind(this, on_window_resize), Lang.bind(this, on_window_resized));
         this.connect_and_track(this, meta_window, 'raised', Lang.bind(this, on_window_raised));
         this.connect_and_track(this, meta_window, "workspace_changed", Lang.bind(this, on_workspace_changed));
+        this.connect_and_track(this, meta_window, 'position-changed', Lang.bind(self, on_window_position_changed));
+        this.connect_and_track(this, meta_window, 'size-changed', Lang.bind(self, on_window_size_changed));
         win._connected = true;
     }
 
