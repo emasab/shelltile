@@ -2,6 +2,7 @@ const Main = imports.ui.main;
 const Lang = imports.lang;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
+const Mainloop = imports.mainloop;
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 
@@ -170,6 +171,7 @@ Window.prototype = {
             Object.assign(tmp, {resolve: resolve, reject: reject});
         })
         Object.assign(ret, tmp);
+        Mainloop.timeout_add(100, ()=>ret.resolve());
         return ret;
     },
 

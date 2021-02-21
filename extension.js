@@ -545,7 +545,7 @@ const Ext = function Ext(){
                 this.calling = false;
             }
         }
-        return ret.bind(ret);
+        return ret.bind(this);
     }
 
     self.bind_to_window_change = function (win, actor){
