@@ -385,15 +385,17 @@ const Ext = function Ext(){
     }
 
     self.on_window_remove = function (win){
-        //if(this.log.is_debug()) this.log.debug("window removed " + win);
         win = this.get_window(win);
         win.marked_for_remove = true;
 
         Mainloop.idle_add(Lang.bind(this, function (){
             if (win.marked_for_remove){
-                if (this.strategy && this.strategy.on_window_remove) this.strategy.on_window_remove(win);
-                this.disconnect_window(win);
-                this.remove_window(win.meta_window);
+                if (this.strategy && this.strategy.on_window_remove) {
+                    this.strategy.on_window_remove(win).then(()=>{
+                        this.disconnect_window(win);
+                        this.remove_window(win.meta_window);
+                    });
+                }
             }
             return false;
         }));

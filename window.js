@@ -24,7 +24,6 @@ Window.MINIMUM_MOVE_FOR_DETACH = 30
 
 Window.prototype = {
     _init: function (meta_window, ext){
-        this._windowTracker = Shell.WindowTracker.get_default();
         this.meta_window = meta_window;
         this.extension = ext;
         this.log = Log.getLogger("Window");
@@ -106,19 +105,6 @@ Window.prototype = {
         return this.meta_window.showing_on_its_workspace();
     },
     
-    before_redraw: function (func){
-        //TODO: idle seems to be the only LaterType that reliably works; but
-        // it causes a visual flash. before_redraw would be better, but that
-        // doesn't seem to be late enough in the layout cycle to move windows around
-        // (which is what this hook is used for).
-        Meta.later_add(
-            Meta.LaterType.IDLE, //when
-            func, //func
-            null, //data
-            null //notify
-        )
-    },
-    
     on_move_to_workspace: async function (workspace){
 
         delete this.marked_for_remove;
@@ -165,13 +151,13 @@ Window.prototype = {
         delete this.marked_for_remove;
     },
 
-    create_promise: function(){
+    create_promise: function(timeout = 100){
         var tmp = {};
         var ret = new Promise((resolve, reject) => {
             Object.assign(tmp, {resolve: resolve, reject: reject});
         })
         Object.assign(ret, tmp);
-        Mainloop.timeout_add(100, ()=>ret.resolve());
+        Mainloop.timeout_add(timeout, ()=>ret.resolve());
         return ret;
     },
 
