@@ -273,6 +273,7 @@ var WindowGroup = function (first, second, type, splitPercent){
     }
 
     this.move_resize = async function (x, y, width, height){
+        this.log.debug("move_resize "  + (new Error().stack));
         if (x === undefined || y === undefined || width === undefined || height === undefined){
             return;
         }
@@ -299,7 +300,7 @@ var WindowGroup = function (first, second, type, splitPercent){
             second_y = first_y + first_height + this.gap_between_windows();
         }
 
-        if(this.log.is_debug()) this.log.debug("first: " + [first_x, first_y, first_width, first_height])
+        if(this.log.is_debug()) this.log.debug("first: " + this.first.toString() + " " + [first_x, first_y, first_width, first_height])
         await this.first.move_resize(first_x, first_y, first_width, first_height);
         var first_rect = this.first.outer_rect();
         
@@ -326,7 +327,7 @@ var WindowGroup = function (first, second, type, splitPercent){
             }
         }
 
-        if(this.log.is_debug()) this.log.debug("second: " + [second_x, second_y, second_width, second_height])
+        if(this.log.is_debug()) this.log.debug("second: " + this.second.toString() + " " + [second_x, second_y, second_width, second_height])
         await this.second.move_resize(second_x, second_y, second_width, second_height);
         var second_rect = this.second.outer_rect();
 
@@ -356,9 +357,9 @@ var WindowGroup = function (first, second, type, splitPercent){
                 }
             }
 
-            if(this.log.is_debug()) this.log.debug("first1: " + [first_x, first_y, first_width, first_height])
+            if(this.log.is_debug()) this.log.debug("first1: " + this.first.toString() + " " + [first_x, first_y, first_width, first_height])
             await this.first.move_resize(first_x, first_y, first_width, first_height);
-            if(this.log.is_debug()) this.log.debug("second1: " + [second_x, second_y, second_width, second_height])
+            if(this.log.is_debug()) this.log.debug("second1: " + this.second.toString() + " " + [second_x, second_y, second_width, second_height])
             await this.second.move_resize(second_x, second_y, second_width, second_height);
         }
         this.update_split_percent(this.outer_rect(), this.first);
@@ -811,7 +812,6 @@ var DefaultTilingStrategy = function (ext){
     }
 
     this.on_window_moved = async function (win){
-
         delete this.__timeout;
 
         this.update_preview(null);
@@ -1020,18 +1020,16 @@ var DefaultTilingStrategy = function (ext){
     }
 
     this.on_window_unmaximize = async function (win){
-        Mainloop.idle_add(Lang.bind(this, async function(){
-            if (win.group){
-                var topmost_group = win.group.get_topmost_group();
-                topmost_group.unminimize(true);
-                await topmost_group.reposition();
-            } else {
-                if (win.check_after){
-                    delete win.check_after;
-                    win.after_group();
-                }
+        if (win.group){
+            var topmost_group = win.group.get_topmost_group();
+            topmost_group.unminimize(true);
+            await topmost_group.reposition();
+        } else {
+            if (win.check_after){
+                delete win.check_after;
+                win.after_group();
             }
-        }));
+        }
     }
 
     this.detach_window = async function (win){

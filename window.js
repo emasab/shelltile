@@ -177,10 +177,10 @@ Window.prototype = {
     
     move_resize: async function (x, y, w, h){
         let outer_rect = this.outer_rect();
-        if (!this.saved_position) {
+        if (!this.saved_position){
             this.saved_position = {x: outer_rect.x, y: outer_rect.y};
         }
-        if (!this.saved_size) {
+        if (!this.saved_size){
             this.saved_size = {width: outer_rect.width, height: outer_rect.height};
         }
         const is_move = x !== outer_rect.x ||
@@ -194,12 +194,12 @@ Window.prototype = {
         this.saved_size.height = h;
 
         const promises = [];
-        if(is_move) {
+        if(is_move){
             const move_promise = this.next_move();
             promises.push(move_promise);
             this.meta_window.move_frame(true, x, y);
         }
-        if(is_resize) {
+        if(is_resize){
             const resize_promise = this.next_resize()
             promises.push(resize_promise);
             this.meta_window.move_resize_frame(true, x, y, w, h);
@@ -371,7 +371,7 @@ Window.prototype = {
 
     },
 
-    has_position_size_changed: function () {
+    has_position_size_changed: function (){
         return this.get_modified_edges(this.saved_size, this.outer_rect());
     },
     

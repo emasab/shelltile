@@ -386,6 +386,7 @@ const Ext = function Ext(){
 
     self.on_window_remove = function (win){
         win = this.get_window(win);
+        if(win.marked_for_remove) return;
         win.marked_for_remove = true;
 
         Mainloop.idle_add(Lang.bind(this, function (){
@@ -625,7 +626,7 @@ const Ext = function Ext(){
         let bind_to_window_change = this.bind_to_window_change(win, actor);
 
         var on_window_remove = this.break_loops(this.on_window_remove);
-        this.connect_and_track(this, meta_window, 'unmanaged', Lang.bind(this, on_window_remove));
+        this.connect_and_track(this, meta_window, 'unmanaged', Lang.bind(this, this.on_window_remove));
 
         let move_ops = [
             Meta.GrabOp.MOVING,
