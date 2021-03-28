@@ -12,6 +12,8 @@ A video is the best way to explain it:
 
 [Video on YouTube](https://www.youtube.com/watch?v=hNncF9Pc6PY)
 
+### Installation
+https://extensions.gnome.org/extension/657/shelltile/
 
 **Keyboard accelerators:**
 
