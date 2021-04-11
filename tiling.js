@@ -133,6 +133,10 @@ var WindowGroup = function (first, second, type, splitPercent){
         this.second.save_size();
     }
 
+    this.real_outer_rect = function() {
+        return this.outer_rect();
+    }
+
     this.outer_rect = function (for_preview){
         var first_rect = this.first.outer_rect();
         var second_rect = this.second.outer_rect();
@@ -186,28 +190,29 @@ var WindowGroup = function (first, second, type, splitPercent){
 
         //if(this.log.is_debug()) this.log.debug("update_split_percent: " + [bounds.x, bounds.y, bounds.width, bounds.height]);
         var splitPercent = this.splitPercent;
-        if(!changed_rect) changed_rect = changed.outer_rect();
+        var changed_chosen = changed || this.first;
+        if(!changed_rect) changed_rect = changed_chosen.outer_rect();
 
-        if (changed === this.first){
+        if (changed_chosen === this.first){
 
             if (this.type == WindowGroup.HORIZONTAL_GROUP){
-                //if(this.log.is_debug()) this.log.debug("horizontal split changed");
+                //if(this.log.is_debug()) this.log.debug("horizontal split changed: " + this.toString());
                 splitPercent = changed_rect.width / bounds.width;
 
             } else if (this.type == WindowGroup.VERTICAL_GROUP){
-                //if(this.log.is_debug()) this.log.debug("vertical split changed");
+                //if(this.log.is_debug()) this.log.debug("vertical split changed: " + this.toString());
                 splitPercent = changed_rect.height / bounds.height;
             }
             this.splitPercent = splitPercent;
 
-        } else if (changed === this.second){
+        } else if (changed_chosen === this.second){
 
             if (this.type == WindowGroup.HORIZONTAL_GROUP){
-                //if(this.log.is_debug()) this.log.debug("horizontal split changed");
+                //if(this.log.is_debug()) this.log.debug("horizontal split changed: " + this.toString());
                 splitPercent = 1 - ((changed_rect.width + this.gap_between_windows()) / bounds.width);
 
             } else if (this.type == WindowGroup.VERTICAL_GROUP){
-                //if(this.log.is_debug()) this.log.debug("vertical split changed");
+                //if(this.log.is_debug()) this.log.debug("vertical split changed: " + this.toString());
                 splitPercent = 1 - ((changed_rect.height + this.gap_between_windows()) / bounds.height);
             }
             this.splitPercent = splitPercent;
@@ -218,14 +223,17 @@ var WindowGroup = function (first, second, type, splitPercent){
             var is_changed_first = this.first === changed;
             var other_side = is_first ? this.group.second : this.group.first;
             if (other_side.first){
+                var other = changed === this.first ? this.second : this.first;
                 var sibling = is_changed_first ? other_side.first : other_side.second;
                 var opposite = sibling === other_side.first ? other_side.second : other_side.first;
-                if (!sibling.has_real_window() && opposite.has_real_window()){
+                if (!sibling.has_real_window() && opposite.has_real_window() ||
+                sibling.has_real_window() && opposite.has_real_window() &&
+                !other.has_real_window()
+                ){
                     other_side.splitPercent = this.splitPercent;
                 }
             }
         }
-
     }
 
     this.update_geometry = async function (win, win_rect){
@@ -272,8 +280,64 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
+    this.check_min_size = function(
+        {first_x,first_y,first_width,first_height},
+        {second_x,second_y,second_width,second_height},
+        {width, height}){
+        const first_min_size = this.first.get_min_size();
+        const second_min_size = this.second.get_min_size();
+        if (this.type == WindowGroup.HORIZONTAL_GROUP){
+            let first_width_tmp = Math.max(first_width, first_min_size.width);
+            let first_diff = first_width_tmp - first_width;
+            second_x += first_diff;
+            second_width -= first_diff;
+            let second_width_tmp = Math.max(second_width, second_min_size.width);
+            let second_diff = second_width_tmp - second_width;
+            second_x -= second_diff;
+            first_width_tmp = Math.max(first_width_tmp - second_diff, first_min_size.width);
+            const min_second_x = first_x + this.gap_between_windows();
+            if (second_x + second_width_tmp > first_x + width) {
+                second_x += first_x + width - second_x - second_width_tmp;
+            }
+            if (second_x < min_second_x) second_x = min_second_x;
+            first_width = first_width_tmp;
+            second_width = second_width_tmp;
+        } else if (this.type == WindowGroup.VERTICAL_GROUP){
+            let first_height_tmp = Math.max(first_height, first_min_size.height);
+            let first_diff = first_height_tmp - first_height;
+            second_y += first_diff;
+            second_height -= first_diff;
+            let second_height_tmp = Math.max(second_height, second_min_size.height);
+            let second_diff = second_height_tmp - second_height;
+            second_y -= second_diff;
+            first_height_tmp = Math.max(first_height_tmp - second_diff, first_min_size.height);
+            const min_second_y = first_y + this.gap_between_windows();
+            if (second_y + second_height_tmp > first_y + height) {
+                second_y += first_y + height - second_y - second_height_tmp;
+            }
+            if (second_y < min_second_y) second_y = min_second_y;
+            first_height = first_height_tmp;
+            second_height = second_height_tmp;
+        }
+        return {first_x,first_y,first_width,first_height,second_x,second_y,second_width,second_height};
+    }
+
+    this.get_min_size = function(){
+        const first_min_size = this.first.get_min_size();
+        const second_min_size = this.second.get_min_size();
+        let ret_width = 1;
+        let ret_height = 1;
+        if (this.type == WindowGroup.HORIZONTAL_GROUP){
+            ret_width = Math.max(first_min_size.width, second_min_size.width + this.gap_between_windows());
+            ret_height = Math.max(first_min_size.height, second_min_size.height);
+        } else if (this.type == WindowGroup.VERTICAL_GROUP){
+            ret_width = Math.max(first_min_size.width, second_min_size.width);
+            ret_height = Math.max(first_min_size.height, second_min_size.height + this.gap_between_windows());
+        }
+        return {width: ret_width,height: ret_height};
+    }
+
     this.move_resize = async function (x, y, width, height){
-        this.log.debug("move_resize "  + (new Error().stack));
         if (x === undefined || y === undefined || width === undefined || height === undefined){
             return;
         }
@@ -287,8 +351,6 @@ var WindowGroup = function (first, second, type, splitPercent){
         let first_y = y;
         let second_y = y;
 
-        //if(this.log.is_debug()) this.log.debug(this);
-
         if (this.type == WindowGroup.HORIZONTAL_GROUP){
             first_width = Math.round(width * this.splitPercent);
             second_width = width - first_width - this.gap_between_windows();
@@ -299,6 +361,19 @@ var WindowGroup = function (first, second, type, splitPercent){
             second_height = height - first_height - this.gap_between_windows();
             second_y = first_y + first_height + this.gap_between_windows();
         }
+
+        const checked_min_size = this.check_min_size(
+            {first_x,first_y,first_width,first_height},
+            {second_x,second_y,second_width,second_height},
+            {width, height});
+        first_x = checked_min_size.first_x;
+        first_y = checked_min_size.first_y;
+        first_width = checked_min_size.first_width;
+        first_height = checked_min_size.first_height;
+        second_x = checked_min_size.second_x;
+        second_y = checked_min_size.second_y;
+        second_width = checked_min_size.second_width;
+        second_height = checked_min_size.second_height;
 
         if(this.log.is_debug()) this.log.debug("first: " + this.first.toString() + " " + [first_x, first_y, first_width, first_height])
         await this.first.move_resize(first_x, first_y, first_width, first_height);
@@ -362,7 +437,7 @@ var WindowGroup = function (first, second, type, splitPercent){
             if(this.log.is_debug()) this.log.debug("second1: " + this.second.toString() + " " + [second_x, second_y, second_width, second_height])
             await this.second.move_resize(second_x, second_y, second_width, second_height);
         }
-        this.update_split_percent(this.outer_rect(), this.first);
+        this.update_split_percent(this.outer_rect());
     }
 
     this.move_to_workspace = function (workspace, descending){
@@ -596,11 +671,11 @@ var WindowGroup = function (first, second, type, splitPercent){
 
         if (win === this.first){
             var corner = this.type == WindowGroup.VERTICAL_GROUP ? 0 : 3;
-            var win_rect = this.second.outer_rect();
+            var win_rect = this.second.real_outer_rect();
 
         } else if (win === this.second){
             var corner = this.type == WindowGroup.VERTICAL_GROUP ? 2 : 1;
-            var win_rect = this.first.outer_rect();
+            var win_rect = this.first.real_outer_rect();
         }
 
         var currentpreview = preview[corner].slice();
@@ -1184,7 +1259,7 @@ var DefaultTilingStrategy = function (ext){
             return ret;
         }
 
-        var below_rect = below.outer_rect();
+        var below_rect = below.real_outer_rect();
 
         var corner_rects = [];
         for (var i = 0; i < 4; i++){
@@ -1234,7 +1309,7 @@ var DefaultTilingStrategy = function (ext){
             };
 
             if (this.extension.mouse_split_percent){
-                var perc = WindowGroup.calc_split_percent(below.outer_rect(), cursor_rect, current_corner, vars[group[2]], current_nums, current_tot, me.log);
+                var perc = WindowGroup.calc_split_percent(below.real_outer_rect(), cursor_rect, current_corner, vars[group[2]], current_nums, current_tot, me.log);
             } else {
                 var perc = 0.5;
             }
@@ -1301,7 +1376,7 @@ var DefaultTilingStrategy = function (ext){
             //if(this.log.is_debug()) this.log.debug("window_under: " + win1);
             if (win1.can_be_tiled() && !win1.is_minimized() && win1.id() != win.id()){
 
-                if (win1.outer_rect().contains_rect(cursor_rect)){
+                if (win1.real_outer_rect().contains_rect(cursor_rect)){
 
                     topmost = win1;
                     break;

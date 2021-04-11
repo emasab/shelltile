@@ -78,6 +78,10 @@ FakeWindow.prototype = {
     
     move_to_monitor: function (idx){},
     
+    get_min_size: function(){
+        return {width: 0, height: 0};
+    },
+
     move_resize: function (x, y, w, h){
         this.x = x;
         this.y = y;
@@ -186,6 +190,11 @@ FakeWindow.prototype = {
     ypos: function (){
         return this.outer_rect().y;
     },
+
+    real_outer_rect: function() {
+        return this.outer_rect();
+    },
+
     outer_rect: function (){
         return new Meta.Rectangle({
             x: this.x,
