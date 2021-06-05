@@ -24,23 +24,31 @@ function versionCompare(first, second){
 }
 
 
-var Compatibility = new(function (){
+class _Compatibility{
+    constructor(){
+        let _wsmgr = global.workspace_manager;
+        let _screen = global.screen;
+        let _display = global.display;
+    
+        if (_screen && (!_wsmgr || !_wsmgr.get_workspace_by_index || !_wsmgr.get_n_workspaces)) _wsmgr = null;
+        if (_screen && (!_display || !_display.get_current_monitor || !_display.get_monitor_geometry)) _display = null;
 
-    var _wsmgr = global.workspace_manager;
-    var _screen = global.screen;
-    var _display = global.display;
-
-    if (_screen && (!_wsmgr || !_wsmgr.get_workspace_by_index || !_wsmgr.get_n_workspaces)) _wsmgr = null;
-    if (_screen && (!_display || !_display.get_current_monitor || !_display.get_monitor_geometry)) _display = null;
-
-    this.get_workspace_manager = function (){
-        return _wsmgr ? _wsmgr : _screen;
-    }
-    this.get_screen = function (){
-        return _display ? _display : _screen;
-    }
-    this.get_display = function (){
-        return _display ? _display : _screen.get_display();
+        this._wsmgr = _wsmgr;
+        this._screen = _screen;
+        this._display = _display;
     }
 
-})();
+    get_workspace_manager (){
+        return this._wsmgr || this._screen;
+    }
+
+    get_screen (){
+        return this._display || this._screen;
+    }
+
+    get_display (){
+        return this._display || this._screen.get_display();
+    }
+}
+
+const Compatibility = new _Compatibility();

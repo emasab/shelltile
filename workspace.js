@@ -6,12 +6,9 @@ const Extension = imports.misc.extensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 const Compatibility = Extension.imports.util.Compatibility;
 
-function Workspace(){
-    this._init.apply(this, arguments)
-}
-Workspace.prototype = {
 
-    _init: function (meta_workspace, ext, strategy){
+class Workspace{
+    constructor(meta_workspace, ext, strategy){
         this._shellwm = global.window_manager;
         this.log = Log.getLogger("Workspace");
         this.meta_workspace = meta_workspace;
@@ -21,24 +18,24 @@ Workspace.prototype = {
         this.meta_windows().map(Lang.bind(this, function (win){
             this.extension.on_window_create(null, win);
         }));
-    },
+    }
 
-    _disable: function (){
-        var self = this;
+
+    _disable (){
         this.extension.disconnect_tracked_signals(this);
         this.meta_workspace = null;
         this.extension = null;
-    },
+    }
 
-    id: function (){
+    id (){
         return this.meta_workspace.toString();
-    },
+    }
 
-    toString: function (){
+    toString (){
         return "<# Workspace at idx " + this.meta_workspace.index() + ">";
-    },
+    }
 
-    meta_windows: function (){
+    meta_windows (){
         var self = this;
 
         var wins = global.get_window_actors().map(function (act){

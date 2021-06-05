@@ -8,10 +8,9 @@ const Meta = imports.gi.Meta;
 const GSWorkspace = imports.ui.workspace.Workspace;
 const WindowGroup = Extension.imports.tiling.WindowGroup;
 
+class OverviewModifierBase{
 
-const OverviewModifierBase = function (){
-
-    this.computeGroupData = function (clones){
+    computeGroupData (clones){
         let groupOrder = [];
         let groupGeometry = {};
         let groupedSlots = [];
@@ -73,7 +72,7 @@ const OverviewModifierBase = function (){
 
     }
 
-    this.simplifyWindows = function (windows){
+    simplifyWindows (windows){
 
         this.computeGroupData(windows);
 
@@ -134,7 +133,7 @@ const OverviewModifierBase = function (){
         return [windows1, windowIds1];
     }
 
-    this.explodeSlots = function (ret){
+    explodeSlots (ret){
 
         if (this.log.is_debug()) this.log.debug("explodeSlots");
 
@@ -215,7 +214,7 @@ const OverviewModifierBase = function (){
         return ret1;
     }
 
-    this.calculateGroupWindowLayouts = function (topmost_group, scaled_group_rect, scale){
+    calculateGroupWindowLayouts (topmost_group, scaled_group_rect, scale){
 
         var ret = {};
         var log = this.log;
@@ -312,25 +311,25 @@ const OverviewModifierBase = function (){
 
         return ret;
     }
-
 }
 
-const OverviewModifier36 = function (gsWorkspace, extension){
+class OverviewModifier36 extends OverviewModifierBase{
 
-    this.gsWorkspace = gsWorkspace;
-    this.extension = extension;
-    this.log = Log.getLogger("OverviewModifier36");
+    constructor(gsWorkspace, extension){
+        super();
+        this.gsWorkspace = gsWorkspace;
+        this.extension = extension;
+        this.log = Log.getLogger("OverviewModifier36");
+    }
 
-    this.computeNumWindowSlots = function (){
+    computeNumWindowSlots (){
         let clones = this.gsWorkspace._windows.slice();
 
         this.computeGroupData(clones);
         return this.groupOrder.length;
     }
 
-    this._prevComputeWindowLayout = function (prevComputeWindowLayout, outer_rect, workspace, slot){
-
-
+    _prevComputeWindowLayout (prevComputeWindowLayout, outer_rect, workspace, slot){
         var fakeWindow = {
 
             get_outer_rect: function (){
@@ -342,10 +341,9 @@ const OverviewModifier36 = function (gsWorkspace, extension){
             }
         }
         return prevComputeWindowLayout(fakeWindow, slot);
-
     }
 
-    this.computeWindowSlots = function (numSlots, prev, prevComputeWindowLayout){
+    computeWindowSlots (numSlots, prev, prevComputeWindowLayout){
 
         let groupSlot = {};
 
@@ -517,11 +515,9 @@ const OverviewModifier36 = function (gsWorkspace, extension){
         }
 
         return ret;
-
     }
 
-    this.getSlotGeometry = function (slot, workspace, prev){
-
+    getSlotGeometry (slot, workspace, prev){
         if (slot.length == 3){
             return prev(slot);
         }
@@ -535,11 +531,9 @@ const OverviewModifier36 = function (gsWorkspace, extension){
         let y = workspace._y + yCenter * workspace._height - height / 2;
 
         return [x, y, width, height];
-
     }
 
-    this.computeWindowLayout = function (metaWindow, slot, prev){
-
+    computeWindowLayout (metaWindow, slot, prev){
         var myWindow = this.extension.get_window(metaWindow);
 
         if (!myWindow.group || myWindow.is_maximized()){
@@ -575,8 +569,7 @@ const OverviewModifier36 = function (gsWorkspace, extension){
         }
     }
 
-    this.orderWindowsByMotionAndStartup = function (clones, slots){
-
+    orderWindowsByMotionAndStartup (clones, slots){
         let arraySequences = {}
         for (let j = 0; j < clones.length; j++){
             let clone = clones[j];
@@ -601,18 +594,18 @@ const OverviewModifier36 = function (gsWorkspace, extension){
         }
 
         return clones;
-
-    };
-
+    }
 }
-OverviewModifier36.prototype = new OverviewModifierBase();
 
-const OverviewModifier38 = function (extension){
+class OverviewModifier38 extends OverviewModifierBase{
 
-    this.extension = extension;
-    this.log = Log.getLogger("OverviewModifier38");
+    constructor(extension){
+        super();
+        this.extension = extension;
+        this.log = Log.getLogger("OverviewModifier38");
+    }
 
-    this.computeWindowSlots = function (windows, prev){
+    computeWindowSlots (windows, prev){
 
         let [windows1, windowsIds1] = this.simplifyWindows(windows);
 
@@ -623,15 +616,16 @@ const OverviewModifier38 = function (extension){
     }
 
 }
-OverviewModifier38.prototype = new OverviewModifierBase();
 
-const OverviewModifier310 = function (extension){
+class OverviewModifier310 extends OverviewModifierBase{
 
-    this.extension = extension;
-    this.log = Log.getLogger("OverviewModifier310");
+    constructor (extension){
+        super();
+        this.extension = extension;
+        this.log = Log.getLogger("OverviewModifier310");
+    }
 
-    this.computeLayout = function (windows, prev){
-
+    computeLayout (windows, prev){
         var me = this;
         let [windows1, windowsIds1] = this.simplifyWindows(windows);
 
@@ -647,100 +641,98 @@ const OverviewModifier310 = function (extension){
         }
 
         return layout;
-
     }
 
 }
-OverviewModifier310.prototype = new OverviewModifierBase();
 
-var OverviewModifier = function (){};
+class OverviewModifier{
+    static register(extension){
+        if (OverviewModifier._registered) return;
 
-OverviewModifier.register = function (extension){
-    if (OverviewModifier._registered) return;
-
-    var prevComputeAllWindowSlots = GSWorkspace.prototype._computeAllWindowSlots;
-    var prevDestroy = GSWorkspace.prototype.destroy;
-    var prevComputeWindowLayout = GSWorkspace.prototype._computeWindowLayout;
-    var prevOrderWindowsByMotionAndStartup = GSWorkspace.prototype._orderWindowsByMotionAndStartup
-    var prevGetSlotGeometry = GSWorkspace.prototype._getSlotGeometry;
-    var prevComputeLayout = GSWorkspace.prototype._computeLayout;
-
-    let version36 = Util.versionCompare(Config.PACKAGE_VERSION, "3.6") >= 0 && Util.versionCompare(Config.PACKAGE_VERSION, "3.7") < 0;
-    version36 = version36 && prevComputeAllWindowSlots;
-    version36 = version36 && prevDestroy;
-    version36 = version36 && prevComputeWindowLayout;
-    version36 = version36 && prevOrderWindowsByMotionAndStartup;
-    version36 = version36 && prevGetSlotGeometry;
-
-    let version38 = Util.versionCompare(Config.PACKAGE_VERSION, "3.7") >= 0 && Util.versionCompare(Config.PACKAGE_VERSION, "3.9") < 0;
-    version38 = version38 && prevComputeAllWindowSlots;
-
-    let version310 = Util.versionCompare(Config.PACKAGE_VERSION, "3.9") >= 0;
-    version310 = version310 && prevComputeLayout;
-
-    if (version36){
-
-        GSWorkspace.prototype._computeAllWindowSlots = function (totalWindows){
-            var prev = Lang.bind(this, prevComputeAllWindowSlots);
-            if (!extension.enabled) return prev(totalWindows);
-
-            this._shellTileOverviewModifier = new OverviewModifier36(this, extension);
-            var numSlots = this._shellTileOverviewModifier.computeNumWindowSlots();
-
-            var prevComputeWindowLayout1 = Lang.bind(this, prevComputeWindowLayout);
-            return this._shellTileOverviewModifier.computeWindowSlots(numSlots, prev, prevComputeWindowLayout1);
+        var prevComputeAllWindowSlots = GSWorkspace.prototype._computeAllWindowSlots;
+        var prevDestroy = GSWorkspace.prototype.destroy;
+        var prevComputeWindowLayout = GSWorkspace.prototype._computeWindowLayout;
+        var prevOrderWindowsByMotionAndStartup = GSWorkspace.prototype._orderWindowsByMotionAndStartup
+        var prevGetSlotGeometry = GSWorkspace.prototype._getSlotGeometry;
+        var prevComputeLayout = GSWorkspace.prototype._computeLayout;
+    
+        let version36 = Util.versionCompare(Config.PACKAGE_VERSION, "3.6") >= 0 && Util.versionCompare(Config.PACKAGE_VERSION, "3.7") < 0;
+        version36 = version36 && prevComputeAllWindowSlots;
+        version36 = version36 && prevDestroy;
+        version36 = version36 && prevComputeWindowLayout;
+        version36 = version36 && prevOrderWindowsByMotionAndStartup;
+        version36 = version36 && prevGetSlotGeometry;
+    
+        let version38 = Util.versionCompare(Config.PACKAGE_VERSION, "3.7") >= 0 && Util.versionCompare(Config.PACKAGE_VERSION, "3.9") < 0;
+        version38 = version38 && prevComputeAllWindowSlots;
+    
+        let version310 = Util.versionCompare(Config.PACKAGE_VERSION, "3.9") >= 0;
+        version310 = version310 && prevComputeLayout;
+    
+        if (version36){
+    
+            GSWorkspace.prototype._computeAllWindowSlots = function (totalWindows){
+                var prev = Lang.bind(this, prevComputeAllWindowSlots);
+                if (!extension.enabled) return prev(totalWindows);
+    
+                this._shellTileOverviewModifier = new OverviewModifier36(this, extension);
+                var numSlots = this._shellTileOverviewModifier.computeNumWindowSlots();
+    
+                var prevComputeWindowLayout1 = Lang.bind(this, prevComputeWindowLayout);
+                return this._shellTileOverviewModifier.computeWindowSlots(numSlots, prev, prevComputeWindowLayout1);
+            }
+    
+            GSWorkspace.prototype.destroy = function (){
+                var prev = Lang.bind(this, prevDestroy);
+                if (!extension.enabled) return prev();
+    
+                delete this._shellTileOverviewModifier;
+                return prev();
+            }
+    
+            GSWorkspace.prototype._computeWindowLayout = function (metaWindow, slot){
+                let prev = Lang.bind(this, prevComputeWindowLayout);
+                if (!extension.enabled) return prev(metaWindow, slot);
+    
+                return this._shellTileOverviewModifier.computeWindowLayout(metaWindow, slot, prev);
+            }
+    
+            GSWorkspace.prototype._orderWindowsByMotionAndStartup = function (clones, slots){
+                let prev = Lang.bind(this, prevOrderWindowsByMotionAndStartup);
+                if (!extension.enabled) return prev(clones, slots);
+    
+                return this._shellTileOverviewModifier.orderWindowsByMotionAndStartup(clones, slots);
+            }
+    
+            GSWorkspace.prototype._getSlotGeometry = function (slot){
+                let prev = Lang.bind(this, prevGetSlotGeometry);
+                if (!extension.enabled) return prev(slot);
+    
+                return this._shellTileOverviewModifier.getSlotGeometry(slot, this, prev);
+            }
+    
+        } else if (version38){
+    
+            GSWorkspace.prototype._computeAllWindowSlots = function (windows){
+                var prev = Lang.bind(this, prevComputeAllWindowSlots);
+                if (!extension.enabled) return prev(windows);
+    
+                this._shellTileOverviewModifier = new OverviewModifier38(extension);
+                return this._shellTileOverviewModifier.computeWindowSlots(windows, prev);
+            }
+    
+        } else if (version310){
+    
+            GSWorkspace.prototype._computeLayout = function (windows){
+                var prev = Lang.bind(this, prevComputeLayout);
+                if (!extension.enabled) return prev(windows);
+    
+                this._shellTileOverviewModifier = new OverviewModifier310(extension);
+                return this._shellTileOverviewModifier.computeLayout(windows, prev);
+            }
+    
         }
-
-        GSWorkspace.prototype.destroy = function (){
-            var prev = Lang.bind(this, prevDestroy);
-            if (!extension.enabled) return prev();
-
-            delete this._shellTileOverviewModifier;
-            return prev();
-        }
-
-        GSWorkspace.prototype._computeWindowLayout = function (metaWindow, slot){
-            let prev = Lang.bind(this, prevComputeWindowLayout);
-            if (!extension.enabled) return prev(metaWindow, slot);
-
-            return this._shellTileOverviewModifier.computeWindowLayout(metaWindow, slot, prev);
-        }
-
-        GSWorkspace.prototype._orderWindowsByMotionAndStartup = function (clones, slots){
-            let prev = Lang.bind(this, prevOrderWindowsByMotionAndStartup);
-            if (!extension.enabled) return prev(clones, slots);
-
-            return this._shellTileOverviewModifier.orderWindowsByMotionAndStartup(clones, slots);
-        }
-
-        GSWorkspace.prototype._getSlotGeometry = function (slot){
-            let prev = Lang.bind(this, prevGetSlotGeometry);
-            if (!extension.enabled) return prev(slot);
-
-            return this._shellTileOverviewModifier.getSlotGeometry(slot, this, prev);
-        }
-
-    } else if (version38){
-
-        GSWorkspace.prototype._computeAllWindowSlots = function (windows){
-            var prev = Lang.bind(this, prevComputeAllWindowSlots);
-            if (!extension.enabled) return prev(windows);
-
-            this._shellTileOverviewModifier = new OverviewModifier38(extension);
-            return this._shellTileOverviewModifier.computeWindowSlots(windows, prev);
-        }
-
-    } else if (version310){
-
-        GSWorkspace.prototype._computeLayout = function (windows){
-            var prev = Lang.bind(this, prevComputeLayout);
-            if (!extension.enabled) return prev(windows);
-
-            this._shellTileOverviewModifier = new OverviewModifier310(extension);
-            return this._shellTileOverviewModifier.computeLayout(windows, prev);
-        }
-
+    
+        OverviewModifier._registered = true;
     }
-
-    OverviewModifier._registered = true;
 }

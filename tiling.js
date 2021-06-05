@@ -16,32 +16,56 @@ const Config = imports.misc.config;
 const Util = Extension.imports.util;
 var version310 = Util.versionCompare(Config.PACKAGE_VERSION, "3.9") >= 0;
 
-var WindowGroup = function (first, second, type, splitPercent){
+class WindowGroup{
 
-    if (!splitPercent) splitPercent = 0.5;
+    constructor(first, second, type, splitPercent){
+        if (!splitPercent) splitPercent = 0.5;
 
-    this.first = first;
-    this.second = second;
-    this.type = type
-    this.splitPercent = splitPercent;
-    this.log = Log.getLogger("WindowGroup");
-    this.group = null;
+        this.first = first;
+        this.second = second;
+        this.type = type
+        this.splitPercent = splitPercent;
+        this.log = Log.getLogger("WindowGroup");
+        this.group = null;
+    }
 
-    this.gap_between_windows = function (){
+    static calc_split_percent (win_rect, cursor_rect, corner, type, num, tot, log){
+        if (corner == 0) var percwidth = cursor_rect.y - (win_rect.y + num / tot * 0.5 * win_rect.height);
+        else if (corner == 1) var percwidth = cursor_rect.x - (win_rect.x + 0.5 * win_rect.width + (tot - num - 1) / tot * 0.5 * win_rect.width);
+        else if (corner == 2) var percwidth = cursor_rect.y - (win_rect.y + 0.5 * win_rect.height + (tot - num - 1) / tot * 0.5 * win_rect.height);
+        else if (corner == 3) var percwidth = cursor_rect.x - (win_rect.x + num / tot * 0.5 * win_rect.width);
+        var perc = type == WindowGroup.VERTICAL_GROUP ? percwidth / win_rect.height * 2 * tot : percwidth / win_rect.width * 2 * tot;
+        if (perc > 0.999) perc = 0.999;
+        if (perc < 0.001) perc = 0.001;
+        return perc;
+    }
+
+    static find_cloned_child (original, clone, child_to_find){
+        if (original === child_to_find) return clone;
+        else if (original.first){
+            var ret = WindowGroup.find_cloned_child(original.first, clone.first, child_to_find);
+            if (ret) return ret;
+            var ret = WindowGroup.find_cloned_child(original.second, clone.second, child_to_find);
+            if (ret) return ret;
+        }
+    }
+
+    gap_between_windows (){
         let ret = this.extension.gap_between_windows;
         if (ret === undefined) ret = 10;
         return ret;
     }
 
-    this.toString = function (){
+
+    toString (){
         return "WindowGroup(first=" + this.first + ",second=" + this.second + ",type=" + this.type + ",splitPercent=" + this.splitPercent + ")";
     }
 
-    this.id = function (){
+    id (){
         return "(" + this.first.id() + "," + this.second.id() + ")";
     }
 
-    this.ids = function (){
+    ids (){
         var ret = [];
         if (this.first.ids) ret = ret.concat(this.first.ids());
         else ret.push(this.first.id());
@@ -52,53 +76,49 @@ var WindowGroup = function (first, second, type, splitPercent){
         return ret;
     }
 
-    this.has_real_window = function (){
+    has_real_window (){
         return true;
     }
 
-    this.has_hole = function (){
+    has_hole (){
         return this.first.has_hole() || this.second.has_hole();
     }
 
-    this.get_maximized_bounds = function (cursor){
+    get_maximized_bounds (cursor){
         if (this.first.has_real_window()) return this.first.get_maximized_bounds(cursor);
         else return this.second.get_maximized_bounds(cursor);
     }
 
-    this.get_workspace = function (){
+    get_workspace (){
         if (this.first.has_real_window()) return this.first.get_workspace();
         else return this.second.get_workspace();
     }
 
-    this.maximize_size = async function (cursor){
+    async maximize_size (cursor){
         var bounds = this.get_maximized_bounds(cursor);
         return this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 
-    this.switch_maximized = async function (){
-
+    async switch_maximized (){
         if (this._last_bounds){
             return await this.unmaximize();
         } else {
             return await this.maximize();
         }
-
     }
 
-    this.maximize = async function (){
-
+    async maximize (){
         this.forget_last_bounds();
         this._last_bounds = this.outer_rect();
         await this.maximize_size();
         this.save_bounds();
     }
 
-    this.is_maximized = function (){
+    is_maximized (){
         return false;
     }
 
-    this.unmaximize = async function (){
-
+    async unmaximize (){
         if (this._last_bounds){
 
             var bounds = this._last_bounds;
@@ -109,35 +129,34 @@ var WindowGroup = function (first, second, type, splitPercent){
         this.forget_last_bounds();
     }
 
-    this.forget_last_bounds = function (){
+    forget_last_bounds (){
         if (this.first.forget_last_bounds) this.first.forget_last_bounds();
         if (this.second.forget_last_bounds) this.second.forget_last_bounds();
-
         if (this._last_bounds) delete this._last_bounds;
     }
 
-    this.save_bounds = function (){
+    save_bounds (){
         this.save_position();
         this.save_size();
     }
 
-    this.save_position = function (){
+    save_position (){
         this.saved_position = this.outer_rect();
         this.first.save_position();
         this.second.save_position();
     }
 
-    this.save_size = function (){
+    save_size (){
         this.saved_size = this.outer_rect();
         this.first.save_size();
         this.second.save_size();
     }
 
-    this.real_outer_rect = function() {
+    real_outer_rect (){
         return this.outer_rect();
     }
 
-    this.outer_rect = function (for_preview){
+    outer_rect (for_preview){
         var first_rect = this.first.outer_rect();
         var second_rect = this.second.outer_rect();
         if (for_preview){
@@ -165,11 +184,11 @@ var WindowGroup = function (first, second, type, splitPercent){
         var width = xright - xleft;
         var height = yright - yleft;
 
-        /*var maximized_bounds = this.get_maximized_bounds();
-        if(x < maximized_bounds.x) x = maximized_bounds.x;
-        if(y < maximized_bounds.y) y = maximized_bounds.y;
-        if(width > maximized_bounds.width) width = maximized_bounds.width;
-        if(height > maximized_bounds.width) height = maximized_bounds.height;*/
+        // var maximized_bounds = this.get_maximized_bounds();
+        // if(x < maximized_bounds.x) x = maximized_bounds.x;
+        // if(y < maximized_bounds.y) y = maximized_bounds.y;
+        // if(width > maximized_bounds.width) width = maximized_bounds.width;
+        // if(height > maximized_bounds.width) height = maximized_bounds.height;
 
         return new Meta.Rectangle({
             x: x,
@@ -179,15 +198,15 @@ var WindowGroup = function (first, second, type, splitPercent){
         });
     }
 
-    this.width = function (){
+    width (){
         return this.outer_rect().width;
     }
-    this.height = function (){
+
+    height (){
         return this.outer_rect().height;
     }
 
-    this.update_split_percent = function (bounds, changed, changed_rect){
-
+    update_split_percent (bounds, changed, changed_rect){
         //if(this.log.is_debug()) this.log.debug("update_split_percent: " + [bounds.x, bounds.y, bounds.width, bounds.height]);
         var splitPercent = this.splitPercent;
         var changed_chosen = changed || this.first;
@@ -236,7 +255,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.update_geometry = async function (win, win_rect){
+    async update_geometry (win, win_rect){
         this.log.debug("update_geometry" + this);
         var bounds = this.outer_rect();
         if (win){
@@ -280,7 +299,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.check_min_size = function(
+    check_min_size (
         {first_x,first_y,first_width,first_height},
         {second_x,second_y,second_width,second_height},
         {width, height}){
@@ -296,7 +315,7 @@ var WindowGroup = function (first, second, type, splitPercent){
             second_x -= second_diff;
             first_width_tmp = Math.max(first_width_tmp - second_diff, first_min_size.width);
             const min_second_x = first_x + this.gap_between_windows();
-            if (second_x + second_width_tmp > first_x + width) {
+            if (second_x + second_width_tmp > first_x + width){
                 second_x += first_x + width - second_x - second_width_tmp;
             }
             if (second_x < min_second_x) second_x = min_second_x;
@@ -312,7 +331,7 @@ var WindowGroup = function (first, second, type, splitPercent){
             second_y -= second_diff;
             first_height_tmp = Math.max(first_height_tmp - second_diff, first_min_size.height);
             const min_second_y = first_y + this.gap_between_windows();
-            if (second_y + second_height_tmp > first_y + height) {
+            if (second_y + second_height_tmp > first_y + height){
                 second_y += first_y + height - second_y - second_height_tmp;
             }
             if (second_y < min_second_y) second_y = min_second_y;
@@ -322,7 +341,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         return {first_x,first_y,first_width,first_height,second_x,second_y,second_width,second_height};
     }
 
-    this.get_min_size = function(){
+    get_min_size (){
         const first_min_size = this.first.get_min_size();
         const second_min_size = this.second.get_min_size();
         let ret_width = 1;
@@ -337,7 +356,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         return {width: ret_width,height: ret_height};
     }
 
-    this.move_resize = async function (x, y, width, height){
+    async move_resize (x, y, width, height){
         if (x === undefined || y === undefined || width === undefined || height === undefined){
             return;
         }
@@ -440,7 +459,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         this.update_split_percent(this.outer_rect());
     }
 
-    this.move_to_workspace = function (workspace, descending){
+    move_to_workspace (workspace, descending){
         if (!descending && this.group){
             this.group.move_to_workspace(workspace);
         }
@@ -458,16 +477,16 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.resolve_promises = function(descending){
-        if(descending || !this.group) {
+    resolve_promises (descending){
+        if(descending || !this.group){
             this.first.resolve_promises(true);
             this.second.resolve_promises(true);
-        } else if(this.group) {
+        } else if(this.group){
             this.group.resolve_promises(false);
         }
     }
 
-    this.raise = function (ascending){
+    raise (ascending){
         if (this.group && ascending){
             this.group.raise(true);
         } else {
@@ -476,7 +495,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.get_windows = function (objects){
+    get_windows (objects){
         var ret = [];
         if (this.first.get_windows){
             ret = ret.concat(this.first.get_windows(objects));
@@ -494,7 +513,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         return ret;
     }
 
-    this.minimize = function (ascending){
+    minimize (ascending){
         if (this.group && ascending){
             this.group.minimize(true);
         } else {
@@ -503,7 +522,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.unminimize = function (ascending){
+    unminimize (ascending){
         if (this.group && ascending){
             this.group.unminimize(true);
         } else {
@@ -512,18 +531,15 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.reposition = async function (){
-
+    async reposition (){
         var group = this.get_topmost_group();
 
         var existing_size = group.outer_rect();
 
         return group.move_resize(existing_size.x, existing_size.y, existing_size.width, existing_size.height);
-
     }
 
-    this.attach = async function (win, replace, cursor){
-
+    async attach (win, replace, cursor){
         if (this.first.group){
             var withGroup = this.first;
         } else {
@@ -568,11 +584,9 @@ var WindowGroup = function (first, second, type, splitPercent){
 
         group.save_bounds();
         group.raise();
-
-
     }
 
-    this.get_topmost_group = function (not_fake){
+    get_topmost_group (not_fake){
         var group = this;
         while (group.group){
             if (not_fake){
@@ -584,7 +598,7 @@ var WindowGroup = function (first, second, type, splitPercent){
     }
 
 
-    this.get_first_non_fake_window = function (){
+    get_first_non_fake_window (){
         var curr = this;
         while (true){
             if (!curr.get_first_non_fake_window) break;
@@ -597,7 +611,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         return curr;
     }
 
-    this.detach = async function (win, noop, replace_with){
+    async detach (win, noop, replace_with){
         var other = this.first === win ? this.second : this.first;
         if (other && !other.has_real_window()) replace_with = null;
 
@@ -660,7 +674,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.preview_rect = function (win, cursor_rect){
+    preview_rect (win, cursor_rect){
         var preview = [
             [0, 0, 1, 0.5],
             [0.5, 0, 0.5, 1],
@@ -704,7 +718,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         });
     }
 
-    this.top_left_window = function (){
+    top_left_window (){
         if (this.type == WindowGroup.HORIZONTAL_GROUP){
             if (this.first.top_left_window) return this.first.top_left_window();
             else if (this.first.has_real_window()) return this.first;
@@ -718,7 +732,7 @@ var WindowGroup = function (first, second, type, splitPercent){
         }
     }
 
-    this.clone = async function (cursor){
+    async clone (cursor){
         if (!this.first.first){
             var first = new FakeWindow(this.extension, this.first.has_real_window() ? this.first : undefined);
         } else var first = await this.first.clone(cursor);
@@ -732,46 +746,28 @@ var WindowGroup = function (first, second, type, splitPercent){
         return ret;
     }
 }
+
 WindowGroup.HORIZONTAL_GROUP = "horizontal";
 WindowGroup.VERTICAL_GROUP = "vertical";
-WindowGroup.calc_split_percent = function (win_rect, cursor_rect, corner, type, num, tot, log){
-    if (corner == 0) var percwidth = cursor_rect.y - (win_rect.y + num / tot * 0.5 * win_rect.height);
-    else if (corner == 1) var percwidth = cursor_rect.x - (win_rect.x + 0.5 * win_rect.width + (tot - num - 1) / tot * 0.5 * win_rect.width);
-    else if (corner == 2) var percwidth = cursor_rect.y - (win_rect.y + 0.5 * win_rect.height + (tot - num - 1) / tot * 0.5 * win_rect.height);
-    else if (corner == 3) var percwidth = cursor_rect.x - (win_rect.x + num / tot * 0.5 * win_rect.width);
-    var perc = type == WindowGroup.VERTICAL_GROUP ? percwidth / win_rect.height * 2 * tot : percwidth / win_rect.width * 2 * tot;
-    if (perc > 0.999) perc = 0.999;
-    if (perc < 0.001) perc = 0.001;
-    return perc;
-}
 
-WindowGroup.find_cloned_child = function (original, clone, child_to_find){
-    if (original === child_to_find) return clone;
-    else if (original.first){
-        var ret = WindowGroup.find_cloned_child(original.first, clone.first, child_to_find);
-        if (ret) return ret;
-        var ret = WindowGroup.find_cloned_child(original.second, clone.second, child_to_find);
-        if (ret) return ret;
+class DefaultTilingStrategy{
+
+    constructor(ext){
+        this.extension = ext;
+        this.log = Log.getLogger("DefaultTilingStrategy");
+        this.lastTime = null;
+        this.lastTimeCtrlPressed = null;
+        this.lastTimeShiftPressed = null;
+
+        this.preview = new St.BoxLayout({
+            style_class: 'tile-preview'
+        });
+        this.preview_for_edge_tiling = false;
+        this.preview.visible = false;
+        Main.uiGroup.add_actor(this.preview);
     }
-}
 
-
-var DefaultTilingStrategy = function (ext){
-
-    this.extension = ext;
-    this.log = Log.getLogger("DefaultTilingStrategy");
-    this.lastTime = null;
-    this.lastTimeCtrlPressed = null;
-    this.lastTimeShiftPressed = null;
-
-    this.preview = new St.BoxLayout({
-        style_class: 'tile-preview'
-    });
-    this.preview_for_edge_tiling = false;
-    this.preview.visible = false;
-    Main.uiGroup.add_actor(this.preview);
-
-    this.is_ctrl_pressed = function (){
+    is_ctrl_pressed (){
         //this.log.debug("Modifier key: " + this.extension.tile_modifier_key);
         var modifiers = Clutter.ModifierType.CONTROL_MASK; // Default: Ctrl only
         if (this.extension.tile_modifier_key === 'Super')
@@ -792,7 +788,7 @@ var DefaultTilingStrategy = function (ext){
         return ret;
     }
 
-    this.is_shift_pressed = function (){
+    is_shift_pressed (){
         let [x, y, mods] = global.get_pointer();
         var ret = mods & Clutter.ModifierType.SHIFT_MASK;
         if (ret){
@@ -806,7 +802,7 @@ var DefaultTilingStrategy = function (ext){
         return ret;
     }
 
-    this.check_after_move = function (moving){
+    check_after_move (moving){
         if (this._check_after_move){
             //if(this.log.is_debug()) this.log.debug("check after move");
             for (var i = 0; i < this._check_after_move.length; i++){
@@ -818,7 +814,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.on_window_move = async function (win){
+    async on_window_move (win){
         //if(!win._dragging) return;
         //win.unmaximize();
         var me = this;
@@ -886,7 +882,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.on_window_moved = async function (win){
+    async on_window_moved (win){
         delete this.__timeout;
 
         this.update_preview(null);
@@ -940,10 +936,9 @@ var DefaultTilingStrategy = function (ext){
 
             }
         }
-
     }
 
-    this.on_accelerator = async function (accel){
+    async on_accelerator (accel){
         var meta_window = Compatibility.get_display().focus_window;
         if(accel) accel = accel.slice(5);
         if (!meta_window) return;
@@ -986,10 +981,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.update_preview = function (preview_rect){
-
-
-
+    update_preview (preview_rect){
         if (preview_rect){
 
             if (!this.last_preview_rect || !this.last_preview_rect.equal(preview_rect)){
@@ -1008,10 +1000,10 @@ var DefaultTilingStrategy = function (ext){
                     height: preview_rect.height
                 });
 
-                /*this.preview.x = preview_rect.x;
-                this.preview.y = preview_rect.y;
-                this.preview.width = preview_rect.width;
-                this.preview.height = preview_rect.height;*/
+                // this.preview.x = preview_rect.x;
+                // this.preview.y = preview_rect.y;
+                // this.preview.width = preview_rect.width;
+                // this.preview.height = preview_rect.height;
             } else {
 
                 //if(this.log.is_debug()) this.log.debug("same rect");
@@ -1025,49 +1017,35 @@ var DefaultTilingStrategy = function (ext){
         this.last_preview_rect = preview_rect;
     }
 
-    this.on_window_resize = function (win){
+    on_window_resize (win){
         win.raise();
-
-        /*
-        * not yet, causees flickering on some types of windows like nautilus
-
-        var currTime = new Date().getTime();
-        if(!this.lastTime || (currTime - this.lastTime) > 200){
-
-            if(win.group){
-
-                this.lastTime = currTime;
-                win.update_geometry(false, true);
-
-            }
-
-        } else {
-
-            if(!this.__timeout){
-                var me = this;
-
-                var remaining = this.lastTime + 200 - currTime + 10;
-
-                me.__timeout = Mainloop.timeout_add(remaining, function(){
-
-                    me.on_window_resize(win);
-                    delete me.__timeout;
-
-                });
-
-            }
-
-        }
-        */
+        
+        // * not yet, causees flickering on some types of windows like nautilus
+        // var currTime = new Date().getTime();
+        // if(!this.lastTime || (currTime - this.lastTime) > 200){
+        //     if(win.group){
+        //         this.lastTime = currTime;
+        //         win.update_geometry(false, true);
+        //     }
+        // } else {
+        //     if(!this.__timeout){
+        //         var me = this;
+        //         var remaining = this.lastTime + 200 - currTime + 10;
+        //         me.__timeout = Mainloop.timeout_add(remaining, function(){
+        //             me.on_window_resize(win);
+        //             delete me.__timeout;
+        //         });
+        //     }
+        // }
     }
 
-    this.on_window_resized = async function (win){
+    async on_window_resized (win){
         this.log.debug("on_window_resized");
         await win.update_geometry(false, true);
         this.on_window_resize(win);
     }
 
-    this.on_window_maximize = async function (win){
+    async on_window_maximize (win){
         if (win.group){
 
             var ctrl_pressed = this.is_ctrl_pressed();
@@ -1094,7 +1072,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.on_window_unmaximize = async function (win){
+    async on_window_unmaximize (win){
         if (win.group){
             var topmost_group = win.group.get_topmost_group();
             topmost_group.unminimize(true);
@@ -1107,7 +1085,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.detach_window = async function (win){
+    async detach_window (win){
         if (win.group){
             var other = null;
             if (!win.group.group){
@@ -1125,20 +1103,20 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.on_window_remove = async function (win){
+    async on_window_remove (win){
         if (win.marked_for_remove){
             //if(this.log.is_debug()) this.log.debug("detach window");
             await this.detach_window(win);
         }
     }
 
-    this.on_window_minimize = async function (win){
+    async on_window_minimize (win){
         if (win.group && !win.is_maximized()){
             await win.group.minimize(true);
         }
     }
 
-    this.on_window_raised = function (win){
+    on_window_raised (win){
         //if(this.log.is_debug()) this.log.debug("raised:" + win.id());
         if (win.group && !win.is_maximized()){
             win.group.raise(true);
@@ -1146,8 +1124,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.get_window_group_preview = function (below, above){
-
+    get_window_group_preview (below, above){
         var log = this.log;
 
         let TOP_LEFT = 0;
@@ -1319,7 +1296,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.get_cursor_rect = function (){
+    get_cursor_rect (){
         let [mouseX, mouseY] = global.get_pointer();
         return new Meta.Rectangle({
             x: mouseX,
@@ -1329,11 +1306,11 @@ var DefaultTilingStrategy = function (ext){
         });
     }
 
-    this.get_cursor_monitor = function (){
+    get_cursor_monitor (){
         return Main.layoutManager.currentMonitor.index;
     }
 
-    this.get_position_rect = function(win, position){
+    get_position_rect (win, position){
         let maximized_bounds = win.get_maximized_bounds();
         let original_maximized_bounds = win.get_maximized_bounds();
         maximized_bounds.x = maximized_bounds.x + Math.trunc(maximized_bounds.width / 2);
@@ -1347,7 +1324,7 @@ var DefaultTilingStrategy = function (ext){
         return maximized_bounds;
     }
 
-    this.get_window_under = function (win, include_fakes, position){
+    get_window_under (win, include_fakes, position){
         var workspace = win.get_workspace();
         var workspace_windows = workspace.meta_windows();
 
@@ -1428,8 +1405,7 @@ var DefaultTilingStrategy = function (ext){
         return topmost;
     }
 
-    this.get_edge_tiling = async function (win, position, preview){
-
+    async get_edge_tiling (win, position, preview){
         var window_under = this.get_window_under(win, true, 
             position.for_accelerator ? position : undefined);
 
@@ -1670,7 +1646,7 @@ var DefaultTilingStrategy = function (ext){
         return win;
     }
 
-    this.get_accelerator_position = function(code){
+    get_accelerator_position (code){
         var is_top = code == "up";
         var is_bottom = code == "down";
         var is_left = code == "left";
@@ -1706,7 +1682,7 @@ var DefaultTilingStrategy = function (ext){
         }
     }
 
-    this.get_edge_preview = async function (win, position, tiling){
+    async get_edge_preview (win, position, tiling){
         if (!this.extension.enable_edge_tiling){
             return null;
         }
@@ -1867,7 +1843,6 @@ var DefaultTilingStrategy = function (ext){
         return ret;
 
     }
-
-};
+}
 
 DefaultTilingStrategy.ACCELERATOR_TIMEOUT = 300;
