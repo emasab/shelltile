@@ -420,7 +420,6 @@ class Ext{
     }
 
     on_window_size_changed (win){
-        this.log.debug("window size change");
         if (!this.enabled) return;
         win = this.get_window(win);
 
@@ -525,7 +524,6 @@ class Ext{
         if (!this.enabled) return;
 
         if (this.strategy && this.strategy.on_window_resized) await this.strategy.on_window_resized(win);
-        if(this.log.is_debug()) this.log.debug("window resized");
     }
 
     break_loops (func){
@@ -571,7 +569,6 @@ class Ext{
                     grab_op = display.get_grab_op();
                     if (relevant_grabs.indexOf(grab_op) == -1){
                         active = false;
-                        this.log.debug("grab_end2" + window);
                         await catch_errors(cb_final, win);
                     }
                     if (active){
@@ -585,7 +582,6 @@ class Ext{
                 if(requested_win_id!=win_id) return;
                 if (!active) return;
                 if (relevant_grabs.indexOf(grab_op) == -1) return;
-                this.log.debug("grab_end1" + window);
                 active = false;
                 await catch_errors(cb_final, win);
             }

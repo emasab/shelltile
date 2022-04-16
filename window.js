@@ -61,7 +61,7 @@ class Window{
         }
     }
     
-    after_group (keep_position){
+    async after_group (keep_position){
         if (this.before_group_size){
             var bounds = this.get_maximized_bounds();
             if (bounds){
@@ -76,7 +76,7 @@ class Window{
                     if (current.y < bounds.y) current.y = bounds.y;
                 }
 
-                this.move_resize(current.x, current.y, current.width, current.height);
+                await this.move_resize(current.x, current.y, current.width, current.height);
                 delete this.before_group_size;
             }
         }
@@ -215,17 +215,13 @@ class Window{
     }
 
     resolve_move_promises (descending){
-        if(this.move_promises.length) this.log.debug("resolve_move_promises "+this.toString());
         this.move_promises.map(p => p.resolve(null));
         this.move_promises = [];
-        this.log.debug("resize promises remaining "+this.resize_promises.length);
     }
 
     resolve_resize_promises (descending){
-        if(this.resize_promises.length) this.log.debug("resolve_resize_promises "+this.toString());
         this.resize_promises.map(p => p.resolve(null));
         this.resize_promises = [];
-        this.log.debug("move promises remaining "+this.move_promises.length);
     }
     
     get_title (){
@@ -335,7 +331,7 @@ class Window{
     maximize_size (){
         var bounds = this.get_maximized_bounds();
         this.maximize();
-        this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
+        return this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
     }
     
     get_boundary_edges (group_size, current_size){

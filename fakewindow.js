@@ -38,7 +38,7 @@ class FakeWindow{
     
     before_group (){}
     
-    after_group (keep_position){}
+    async after_group (keep_position){}
     
     minimize (){}
     

@@ -256,7 +256,6 @@ class WindowGroup{
     }
 
     async update_geometry (win, win_rect){
-        this.log.debug("update_geometry" + this);
         var bounds = this.outer_rect();
         if (win){
 
@@ -394,7 +393,7 @@ class WindowGroup{
         second_width = checked_min_size.second_width;
         second_height = checked_min_size.second_height;
 
-        if(this.log.is_debug()) this.log.debug("first: " + this.first.toString() + " " + [first_x, first_y, first_width, first_height])
+        //if(this.log.is_debug()) this.log.debug("first: " + this.first.toString() + " " + [first_x, first_y, first_width, first_height])
         await this.first.move_resize(first_x, first_y, first_width, first_height);
         var first_rect = this.first.outer_rect();
         
@@ -421,7 +420,7 @@ class WindowGroup{
             }
         }
 
-        if(this.log.is_debug()) this.log.debug("second: " + this.second.toString() + " " + [second_x, second_y, second_width, second_height])
+        //if(this.log.is_debug()) this.log.debug("second: " + this.second.toString() + " " + [second_x, second_y, second_width, second_height])
         await this.second.move_resize(second_x, second_y, second_width, second_height);
         var second_rect = this.second.outer_rect();
 
@@ -451,9 +450,7 @@ class WindowGroup{
                 }
             }
 
-            if(this.log.is_debug()) this.log.debug("first1: " + this.first.toString() + " " + [first_x, first_y, first_width, first_height])
             await this.first.move_resize(first_x, first_y, first_width, first_height);
-            if(this.log.is_debug()) this.log.debug("second1: " + this.second.toString() + " " + [second_x, second_y, second_width, second_height])
             await this.second.move_resize(second_x, second_y, second_width, second_height);
         }
         this.update_split_percent(this.outer_rect());
@@ -589,11 +586,9 @@ class WindowGroup{
     get_topmost_group (not_fake){
         var group = this;
         while (group.group){
-            if (not_fake){
-                if (!group.group.first.has_real_window() || !group.group.second.has_real_window()) break;
-            }
             group = group.group;
         }
+        if (not_fake) group = group.get_first_non_fake_window();
         return group;
     }
 
@@ -768,7 +763,7 @@ class DefaultTilingStrategy{
     }
 
     is_ctrl_pressed (){
-        //this.log.debug("Modifier key: " + this.extension.tile_modifier_key);
+        //if(this.log.is_debug()) this.log.debug("Modifier key: " + this.extension.tile_modifier_key);
         var modifiers = Clutter.ModifierType.CONTROL_MASK; // Default: Ctrl only
         if (this.extension.tile_modifier_key === 'Super')
             modifiers = Clutter.ModifierType.MOD4_MASK;
@@ -802,13 +797,13 @@ class DefaultTilingStrategy{
         return ret;
     }
 
-    check_after_move (moving){
+    async check_after_move (moving){
         if (this._check_after_move){
             //if(this.log.is_debug()) this.log.debug("check after move");
             for (var i = 0; i < this._check_after_move.length; i++){
                 var c = this._check_after_move[i];
                 //if(this.log.is_debug()) this.log.debug("check after move1");
-                if (!c.group && c.after_group) c.after_group(c === moving);
+                if (!c.group && c.after_group) await c.after_group(c === moving);
             }
             delete this._check_after_move;
         }
@@ -866,8 +861,6 @@ class DefaultTilingStrategy{
 
                 var preview_rect = await this.get_edge_preview(win);
             }
-
-            this.log.debug("preview_rect: " + preview_rect);
 
             this.preview_for_edge_tiling = for_edge_tiling;
             this.update_preview(preview_rect);
@@ -1040,7 +1033,6 @@ class DefaultTilingStrategy{
     }
 
     async on_window_resized (win){
-        this.log.debug("on_window_resized");
         await win.update_geometry(false, true);
         this.on_window_resize(win);
     }
@@ -1080,7 +1072,7 @@ class DefaultTilingStrategy{
         } else {
             if (win.check_after){
                 delete win.check_after;
-                win.after_group();
+                await win.after_group();
             }
         }
     }
@@ -1098,7 +1090,7 @@ class DefaultTilingStrategy{
 
             await win.group.detach(win, undefined, replacement);
             if (!replacement && other && other.after_group){
-                other.after_group();
+                await other.after_group();
             }
         }
     }
