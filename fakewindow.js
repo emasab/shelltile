@@ -6,7 +6,7 @@ const Extension = imports.misc.extensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 
 
-class FakeWindow{
+var FakeWindow = class FakeWindow{
     constructor(extension, win){
         this.log = Log.getLogger("FakeWindow");
         this.x = 0;

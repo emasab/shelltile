@@ -1,7 +1,7 @@
 const GLib = imports.gi.GLib;
 
 
-class Logger{
+var Logger = class Logger{
     constructor(name, level){
         this.base = name;
         if (!level){

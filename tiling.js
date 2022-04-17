@@ -16,7 +16,7 @@ const Config = imports.misc.config;
 const Util = Extension.imports.util;
 var version310 = Util.versionCompare(Config.PACKAGE_VERSION, "3.9") >= 0;
 
-class WindowGroup{
+var WindowGroup = class WindowGroup{
 
     constructor(first, second, type, splitPercent){
         if (!splitPercent) splitPercent = 0.5;
@@ -745,7 +745,7 @@ class WindowGroup{
 WindowGroup.HORIZONTAL_GROUP = "horizontal";
 WindowGroup.VERTICAL_GROUP = "vertical";
 
-class DefaultTilingStrategy{
+var DefaultTilingStrategy = class DefaultTilingStrategy{
 
     constructor(ext){
         this.extension = ext;

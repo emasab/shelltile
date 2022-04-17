@@ -7,7 +7,7 @@ const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 const Compatibility = Extension.imports.util.Compatibility;
 
 
-class Workspace{
+var Workspace = class Workspace{
     constructor(meta_workspace, ext, strategy){
         this._shellwm = global.window_manager;
         this.log = Log.getLogger("Workspace");

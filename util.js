@@ -51,4 +51,4 @@ class _Compatibility{
     }
 }
 
-const Compatibility = new _Compatibility();
+var Compatibility = new _Compatibility();

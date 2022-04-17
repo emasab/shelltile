@@ -6,7 +6,7 @@ const Mainloop = imports.mainloop;
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 
-class Window{
+var Window = class Window{
 
     static get_id (w){
         if (!w || !w.get_stable_sequence){

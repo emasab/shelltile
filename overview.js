@@ -645,7 +645,7 @@ class OverviewModifier310 extends OverviewModifierBase{
 
 }
 
-class OverviewModifier{
+var OverviewModifier = class OverviewModifier{
     static register(extension){
         if (OverviewModifier._registered) return;
 
