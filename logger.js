@@ -1,57 +1,59 @@
 const GLib = imports.gi.GLib;
 
-var Logger = function (name, level){
-    let self = this;
-    self.base = name;
-    if (!level){
-        level = Logger.DEFAULT_LEVEL;
-    }
-    self.level = level;
 
-    var checkLevel = function (level){
-        return level === undefined || self.level === undefined || level >= self.level;
+var Logger = class Logger{
+    constructor(name, level){
+        this.base = name;
+        if (!level){
+            level = Logger.DEFAULT_LEVEL;
+        }
+        this.level = level;
     }
 
-    self.log = function (name, message, level){
-        if (checkLevel(level)){
-            global.log("[" + name + "]" + self.base + " " + message);
+    checkLevel(level){
+        return level === undefined || this.level === undefined || level >= this.level;
+    }
+
+    log (name, message, level){
+        if (this.checkLevel(level)){
+            global.log("[" + name + "]" + this.base + " " + message);
         }
     }
 
-    self.debug = function (message){
-        self.log("DEBUG", message, Logger.LEVEL_DEBUG);
+    debug (message){
+        this.log("DEBUG", message, Logger.LEVEL_DEBUG);
     }
 
-    self.info = function (message){
-        self.log("INFO", message, Logger.LEVEL_INFO);
+    info (message){
+        this.log("INFO", message, Logger.LEVEL_INFO);
     }
 
-    self.warn = function (message){
-        self.log("WARN", message, Logger.LEVEL_WARN);
+    warn (message){
+        this.log("WARN", message, Logger.LEVEL_WARN);
     }
 
-    self.error = function (message){
-        self.log("ERROR", message, Logger.LEVEL_ERROR);
+    error (message){
+        this.log("ERROR", message, Logger.LEVEL_ERROR);
     }
 
-    self.getLogger = function (clazz){
-        return new Logger(self.base + "[" + clazz + "]", self.level);
+    getLogger (clazz){
+        return new Logger(this.base + "[" + clazz + "]", this.level);
     }
 
-    self.is_debug = function (){
-        return checkLevel(Logger.LEVEL_DEBUG);
+    is_debug (){
+        return this.checkLevel(Logger.LEVEL_DEBUG);
     }
 
-    self.is_info = function (){
-        return checkLevel(Logger.LEVEL_INFO);
+    is_info (){
+        return this.checkLevel(Logger.LEVEL_INFO);
     }
 
-    self.is_warn = function (){
-        return checkLevel(Logger.LEVEL_WARN);
+    is_warn (){
+        return this.checkLevel(Logger.LEVEL_WARN);
     }
 
-    self.is_error = function (){
-        return checkLevel(Logger.LEVEL_ERROR);
+    is_error (){
+        return this.checkLevel(Logger.LEVEL_ERROR);
     }
 }
 
@@ -60,7 +62,7 @@ Logger.LEVEL_INFO = 1;
 Logger.LEVEL_WARN = 2;
 Logger.LEVEL_ERROR = 3;
 
-Logger.DEFAULT_LEVEL = Logger.LEVEL_ERROR;
+Logger.DEFAULT_LEVEL = Logger.LEVEL_WARN;
 if (GLib.getenv("SHELLTILE_DEBUG")){
 
     Logger.DEFAULT_LEVEL = Logger.LEVEL_DEBUG;

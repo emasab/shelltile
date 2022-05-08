@@ -5,13 +5,15 @@ const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 const Util = Extension.imports.util;
 const Lang = imports.lang;
 const Meta = imports.gi.Meta;
+const Main = imports.ui.main;
 const GSWorkspace = imports.ui.workspace.Workspace;
+const GSWorkspaceLayout = imports.ui.workspace.WorkspaceLayout;
+const UnalignedLayoutStrategy = imports.ui.workspace.UnalignedLayoutStrategy;
 const WindowGroup = Extension.imports.tiling.WindowGroup;
 
+class OverviewModifierBase{
 
-const OverviewModifierBase = function (){
-
-    this.computeGroupData = function (clones){
+    computeGroupData (clones){
         let groupOrder = [];
         let groupGeometry = {};
         let groupedSlots = [];
@@ -27,7 +29,7 @@ const OverviewModifierBase = function (){
 
             var myWindow = this.extension.get_window(clone_meta_window, true);
             var windowId = myWindow.id();
-            if (this.log.is_debug()) this.log.debug(myWindow);
+            //if (this.log.is_debug()) this.log.debug(myWindow);
             clones1.push(windowId);
             idClone[windowId] = clone;
 
@@ -73,14 +75,14 @@ const OverviewModifierBase = function (){
 
     }
 
-    this.simplifyWindows = function (windows){
+    simplifyWindows (windows){
 
         this.computeGroupData(windows);
 
         var windows1 = [];
         var windowIds1 = [];
 
-        if (this.log.is_debug()) this.log.debug("simplifyWindows");
+        //if (this.log.is_debug()) this.log.debug("simplifyWindows");
 
         for (var i = 0; i < this.singleSlots.length; i++){
 
@@ -120,7 +122,11 @@ const OverviewModifierBase = function (){
             clone.windowCenter = {
                 x: (clone.x + parseInt(clone.width/2)),
                 y: (clone.y + parseInt(clone.height/2))
-            }
+            };
+            clone.boundingBox = {
+            	width: geometry.width,
+            	height: geometry.height
+            };
 
             clone._ids = cloneGroupObject.ids();
             //clone.metaWindow = top_left_window.meta_window;			
@@ -134,13 +140,13 @@ const OverviewModifierBase = function (){
         return [windows1, windowIds1];
     }
 
-    this.explodeSlots = function (ret){
+    explodeSlots (ret){
 
         if (this.log.is_debug()) this.log.debug("explodeSlots");
 
         var idRet = {};
         for (var i = 0; i < ret.length; i++){
-            var ret11 = ret[i][3];
+            var ret11 = ret[i][ret[i].length - 1];
             if (ret11._ids){
                 for (var j = 0; j < ret11._ids.length; j++){
 
@@ -169,8 +175,17 @@ const OverviewModifierBase = function (){
 
             if (isGroup){
                 var groupId = this.cloneGroup[cloneId];
+                var groupGeometry = this.groupGeometry[groupId];
                 var ret2 = idRet[cloneId].slice();
-                let [x, y, scale, clone2] = ret2;
+                let x, y, scale, width, height, clone2;
+                if (ret2.length == 4){
+                    [x, y, scale, clone2] = ret2;
+                    width = groupGeometry.width * scale;
+                    height = groupGeometry.height * scale;
+                } else if (ret2.length == 5){
+                    [x, y, width, height, clone2] = ret2;
+                    scale = width / groupGeometry.width;
+                }
 
                 var update = !this.groupWindowLayouts[groupId] || !this.lastGroupPosition[groupId];
                 if (!update){
@@ -179,10 +194,6 @@ const OverviewModifierBase = function (){
                 }
 
                 if (update){
-                    var groupGeometry = this.groupGeometry[groupId];
-                    let width = groupGeometry.width * scale,
-                        height = groupGeometry.height * scale;
-
                     var scaled_group_rect = new Meta.Rectangle({
                         x: x,
                         y: y,
@@ -196,13 +207,21 @@ const OverviewModifierBase = function (){
                 }
 
                 var groupWindowLayouts = this.groupWindowLayouts[groupId];
-                var windowLayout = groupWindowLayouts[cloneId];
-                //if(this.log.is_debug()) this.log.debug("slot: " + windowLayout);			
+                var windowLayout = groupWindowLayouts[cloneId];			
 
-                ret2[0] = windowLayout[0];
-                ret2[1] = windowLayout[1];
-                ret2[3] = clone;
-
+                if (ret2.length == 4){
+                    ret2[0] = windowLayout[0];
+                    ret2[1] = windowLayout[1];
+                    ret2[2] = scale;
+                    ret2[3] = clone;
+                } else if (ret2.length == 5){
+                    let myWindowOuterRect = myWindow.outer_rect();
+                    ret2[0] = windowLayout[0];
+                    ret2[1] = windowLayout[1];
+                    ret2[2] = myWindowOuterRect.width * scale;
+                    ret2[3] = myWindowOuterRect.height * scale;
+                    ret2[4] = clone;
+                }
             } else {
 
                 var ret2 = idRet[cloneId].slice();
@@ -215,7 +234,7 @@ const OverviewModifierBase = function (){
         return ret1;
     }
 
-    this.calculateGroupWindowLayouts = function (topmost_group, scaled_group_rect, scale){
+    calculateGroupWindowLayouts (topmost_group, scaled_group_rect, scale){
 
         var ret = {};
         var log = this.log;
@@ -312,307 +331,17 @@ const OverviewModifierBase = function (){
 
         return ret;
     }
-
 }
 
-const OverviewModifier36 = function (gsWorkspace, extension){
+class OverviewModifier38 extends OverviewModifierBase{
 
-    this.gsWorkspace = gsWorkspace;
-    this.extension = extension;
-    this.log = Log.getLogger("OverviewModifier36");
-
-    this.computeNumWindowSlots = function (){
-        let clones = this.gsWorkspace._windows.slice();
-
-        this.computeGroupData(clones);
-        return this.groupOrder.length;
+    constructor(extension){
+        super();
+        this.extension = extension;
+        this.log = Log.getLogger("OverviewModifier38");
     }
 
-    this._prevComputeWindowLayout = function (prevComputeWindowLayout, outer_rect, workspace, slot){
-
-
-        var fakeWindow = {
-
-            get_outer_rect: function (){
-                return outer_rect;
-            },
-            
-            get_workspace: function (){
-                return workspace;
-            }
-        }
-        return prevComputeWindowLayout(fakeWindow, slot);
-
-    }
-
-    this.computeWindowSlots = function (numSlots, prev, prevComputeWindowLayout){
-
-        let groupSlot = {};
-
-        if (numSlots < 3){
-
-            let basicWindowSlots = prev(numSlots);
-
-            for (var i = 0; i < this.groupOrder.length; i++){
-
-                var group = this.groupOrder[i];
-                var slot = basicWindowSlots[i];
-                groupSlot[group] = slot;
-
-            }
-
-        } else {
-
-            let singleWeight = 1.;
-            let groupedWeight = 1.5;
-            let numberOfWindows = this.groupedSlots.length + this.singleSlots.length;
-            let slots = [];
-            //if(this.log.is_debug()) this.log.debug("this.clones.length : " + this.clones.length);	
-            //if(this.log.is_debug()) this.log.debug("numberOfWindows : " + numberOfWindows);	
-
-            let gridWidth = Math.ceil(Math.sqrt(numberOfWindows));
-            let gridHeight = Math.ceil(numberOfWindows / gridWidth);
-            let gridWidthRest = numberOfWindows % gridWidth;
-            let gridWidthSub = 0;
-            if (gridWidthRest > 0 && gridHeight > (gridWidth - gridWidthRest)){
-                gridWidthSub = gridWidth - gridWidthRest;
-            }
-
-            //if(this.log.is_debug()) this.log.debug("gridWidth : " + gridWidth);	
-            //if(this.log.is_debug()) this.log.debug("gridHeight : " + gridHeight);
-            //if(this.log.is_debug()) this.log.debug("gridWidthRest : " + gridWidthRest);
-
-            //if(this.log.is_debug()) this.log.debug("this.groupedSlots.length : " + this.groupedSlots.length);
-            //if(this.log.is_debug()) this.log.debug("this.groupedSlots.length : " +  this.singleSlots.length);
-
-            var col = 0;
-            var row = 0;
-            var colIdx = 0;
-            var rowIdx = 0;
-            var singleSlotIdx = 0;
-
-            let xCenter, yCenter, fraction, slot, singleSlot;
-            let nextSlots, groupedSlots, singleSlots, nextSlotsIds, currentGrouped = 0,
-                currentSingle = 0;
-            let currentHeight, currentWidth, fractionW, fractionH;
-            let log = this.log;
-
-            let addToRow = Lang.bind(this, function (groupedSlots, ret){
-
-                for (let j = 0; j < groupedSlots.length; j++){
-
-                    let groupedSlot = groupedSlots[j];
-
-                    fractionW = currentWidth * 0.95;
-                    fractionH = currentHeight * 0.95;
-                    xCenter = currentWidth / 2. + col;
-                    yCenter = currentHeight / 2. + row;
-
-                    slot = [xCenter, yCenter, fractionW, fractionH];
-                    //if(log.is_debug()) log.debug("slot : " + slot);
-                    ret.push(slot);
-                    groupSlot[groupedSlot] = slot;
-
-                    col += currentWidth;
-
-                }
-
-
-            });
-
-            let calculateNextRow = Lang.bind(this, function (){
-
-                let ret = [];
-                let gridWidth1 = gridWidth;
-                if (rowIdx < gridWidthSub){
-                    gridWidth1--;
-                }
-
-                groupedSlots = this.groupedSlots.slice(currentGrouped, currentGrouped + gridWidth1);
-                currentGrouped += groupedSlots.length;
-
-                singleSlots = this.singleSlots.slice(currentSingle, currentSingle + (gridWidth1 - groupedSlots.length));
-                currentSingle += singleSlots.length;
-
-                //if(log.is_debug()) log.debug("groupedSlots : " + groupedSlots);
-                //if(log.is_debug()) log.debug("singleSlots : " + singleSlots);
-
-                currentHeight = singleWeight / gridHeight;
-                currentWidth = singleWeight / gridWidth1;
-
-                if (groupedSlots.length > 0){
-                    currentHeight = groupedWeight / gridHeight;
-                    currentWidth = groupedWeight / gridWidth1;
-                }
-
-                addToRow(groupedSlots, ret);
-
-                currentWidth = singleWeight / gridWidth1;
-
-                addToRow(singleSlots, ret);
-
-                if (col > singleWeight){
-                    for (let j = 0; j < ret.length; j++){
-
-                        let slot1 = ret[j];
-                        slot1[0] = slot1[0] / col * singleWeight;
-                        slot1[2] = slot1[2] / col * singleWeight;
-                    }
-                } else {
-
-                    for (let j = 0; j < ret.length; j++){
-
-                        let slot1 = ret[j];
-                        slot1[0] += (singleWeight - col) / 2.;
-                    }
-
-                }
-                for (let j = 0; j < ret.length; j++){
-
-                    let slot1 = ret[j];
-                    //if(log.is_debug()) log.debug("slot1 : " + slot1);
-                }
-
-                return ret;
-
-
-            });
-
-            while (!nextSlots || nextSlots.length > 0){
-
-                nextSlots = calculateNextRow();
-
-                if (nextSlots.length > 0){
-                    slots = slots.concat(nextSlots);
-                    row += currentHeight;
-                    rowIdx++;
-                    col = 0;
-
-                }
-
-            }
-
-
-            for (let j = 0; j < slots.length; j++){
-
-                let slot1 = slots[j];
-                slot1[1] = slot1[1] / row;
-                slot1[3] = slot1[3] / row;
-
-            }
-
-        }
-
-        var ret = [];
-
-        for (var i = 0; i < this.clones.length; i++){
-
-            var cloneId = this.clones[i];
-
-            var cloneGroup = this.cloneGroup[cloneId];
-            var cloneSlot = groupSlot[cloneGroup];
-
-            ret.push(cloneSlot);
-
-        }
-
-        return ret;
-
-    }
-
-    this.getSlotGeometry = function (slot, workspace, prev){
-
-        if (slot.length == 3){
-            return prev(slot);
-        }
-
-        let [xCenter, yCenter, fractionW, fractionH] = slot;
-
-        let width = workspace._width * fractionW;
-        let height = workspace._height * fractionH;
-
-        let x = workspace._x + xCenter * workspace._width - width / 2;
-        let y = workspace._y + yCenter * workspace._height - height / 2;
-
-        return [x, y, width, height];
-
-    }
-
-    this.computeWindowLayout = function (metaWindow, slot, prev){
-
-        var myWindow = this.extension.get_window(metaWindow);
-
-        if (!myWindow.group || myWindow.is_maximized()){
-            return prev(metaWindow, slot);
-        } else {
-
-            var topmost_group = myWindow.group.get_topmost_group();
-            var id = topmost_group.id();
-            if (this.groupWindowLayouts[id]){
-
-                return this.groupWindowLayouts[id][myWindow.id()];
-
-            } else {
-
-                var outer_rect = topmost_group.outer_rect(true);
-                let [x, y, scale] = this._prevComputeWindowLayout(prev, outer_rect, metaWindow.get_workspace(), slot);
-
-                let width = outer_rect.width * scale;
-                let height = outer_rect.height * scale;
-
-                var scaled_group_rect = new Meta.Rectangle({
-                    x: x,
-                    y: y,
-                    width: width,
-                    height: height
-                });
-                let groupWindowLayout = this.calculateGroupWindowLayouts(topmost_group, scaled_group_rect, scale);
-
-                this.groupWindowLayouts[id] = groupWindowLayout;
-                return groupWindowLayout[myWindow.id()];
-
-            }
-        }
-    }
-
-    this.orderWindowsByMotionAndStartup = function (clones, slots){
-
-        let arraySequences = {}
-        for (let j = 0; j < clones.length; j++){
-            let clone = clones[j];
-            arraySequences[clone.metaWindow.get_stable_sequence()] = j;
-        }
-
-        clones.sort(function (w1, w2){
-            return w2.metaWindow.get_stable_sequence() - w1.metaWindow.get_stable_sequence();
-        });
-
-        let ret = [];
-        for (let j = 0; j < clones.length; j++){
-            let clone = clones[j];
-            let arraySequence = arraySequences[clone.metaWindow.get_stable_sequence()];
-            ret.push(slots[arraySequence]);
-        }
-
-        slots.splice(0, slots.length);
-        for (let j = 0; j < ret.length; j++){
-            let slot = ret[j];
-            slots.push(slot);
-        }
-
-        return clones;
-
-    };
-
-}
-OverviewModifier36.prototype = new OverviewModifierBase();
-
-const OverviewModifier38 = function (extension){
-
-    this.extension = extension;
-    this.log = Log.getLogger("OverviewModifier38");
-
-    this.computeWindowSlots = function (windows, prev){
+    computeWindowSlots (windows, prev){
 
         let [windows1, windowsIds1] = this.simplifyWindows(windows);
 
@@ -623,15 +352,16 @@ const OverviewModifier38 = function (extension){
     }
 
 }
-OverviewModifier38.prototype = new OverviewModifierBase();
 
-const OverviewModifier310 = function (extension){
+class OverviewModifier310 extends OverviewModifierBase{
 
-    this.extension = extension;
-    this.log = Log.getLogger("OverviewModifier310");
+    constructor (extension){
+        super();
+        this.extension = extension;
+        this.log = Log.getLogger("OverviewModifier310");
+    }
 
-    this.computeLayout = function (windows, prev){
-
+    computeLayout (windows, prev){
         var me = this;
         let [windows1, windowsIds1] = this.simplifyWindows(windows);
 
@@ -647,100 +377,132 @@ const OverviewModifier310 = function (extension){
         }
 
         return layout;
-
     }
 
 }
-OverviewModifier310.prototype = new OverviewModifierBase();
 
-var OverviewModifier = function (){};
+class OverviewModifier338 extends OverviewModifierBase{
 
-OverviewModifier.register = function (extension){
-    if (OverviewModifier._registered) return;
-
-    var prevComputeAllWindowSlots = GSWorkspace.prototype._computeAllWindowSlots;
-    var prevDestroy = GSWorkspace.prototype.destroy;
-    var prevComputeWindowLayout = GSWorkspace.prototype._computeWindowLayout;
-    var prevOrderWindowsByMotionAndStartup = GSWorkspace.prototype._orderWindowsByMotionAndStartup
-    var prevGetSlotGeometry = GSWorkspace.prototype._getSlotGeometry;
-    var prevComputeLayout = GSWorkspace.prototype._computeLayout;
-
-    let version36 = Util.versionCompare(Config.PACKAGE_VERSION, "3.6") >= 0 && Util.versionCompare(Config.PACKAGE_VERSION, "3.7") < 0;
-    version36 = version36 && prevComputeAllWindowSlots;
-    version36 = version36 && prevDestroy;
-    version36 = version36 && prevComputeWindowLayout;
-    version36 = version36 && prevOrderWindowsByMotionAndStartup;
-    version36 = version36 && prevGetSlotGeometry;
-
-    let version38 = Util.versionCompare(Config.PACKAGE_VERSION, "3.7") >= 0 && Util.versionCompare(Config.PACKAGE_VERSION, "3.9") < 0;
-    version38 = version38 && prevComputeAllWindowSlots;
-
-    let version310 = Util.versionCompare(Config.PACKAGE_VERSION, "3.9") >= 0;
-    version310 = version310 && prevComputeLayout;
-
-    if (version36){
-
-        GSWorkspace.prototype._computeAllWindowSlots = function (totalWindows){
-            var prev = Lang.bind(this, prevComputeAllWindowSlots);
-            if (!extension.enabled) return prev(totalWindows);
-
-            this._shellTileOverviewModifier = new OverviewModifier36(this, extension);
-            var numSlots = this._shellTileOverviewModifier.computeNumWindowSlots();
-
-            var prevComputeWindowLayout1 = Lang.bind(this, prevComputeWindowLayout);
-            return this._shellTileOverviewModifier.computeWindowSlots(numSlots, prev, prevComputeWindowLayout1);
-        }
-
-        GSWorkspace.prototype.destroy = function (){
-            var prev = Lang.bind(this, prevDestroy);
-            if (!extension.enabled) return prev();
-
-            delete this._shellTileOverviewModifier;
-            return prev();
-        }
-
-        GSWorkspace.prototype._computeWindowLayout = function (metaWindow, slot){
-            let prev = Lang.bind(this, prevComputeWindowLayout);
-            if (!extension.enabled) return prev(metaWindow, slot);
-
-            return this._shellTileOverviewModifier.computeWindowLayout(metaWindow, slot, prev);
-        }
-
-        GSWorkspace.prototype._orderWindowsByMotionAndStartup = function (clones, slots){
-            let prev = Lang.bind(this, prevOrderWindowsByMotionAndStartup);
-            if (!extension.enabled) return prev(clones, slots);
-
-            return this._shellTileOverviewModifier.orderWindowsByMotionAndStartup(clones, slots);
-        }
-
-        GSWorkspace.prototype._getSlotGeometry = function (slot){
-            let prev = Lang.bind(this, prevGetSlotGeometry);
-            if (!extension.enabled) return prev(slot);
-
-            return this._shellTileOverviewModifier.getSlotGeometry(slot, this, prev);
-        }
-
-    } else if (version38){
-
-        GSWorkspace.prototype._computeAllWindowSlots = function (windows){
-            var prev = Lang.bind(this, prevComputeAllWindowSlots);
-            if (!extension.enabled) return prev(windows);
-
-            this._shellTileOverviewModifier = new OverviewModifier38(extension);
-            return this._shellTileOverviewModifier.computeWindowSlots(windows, prev);
-        }
-
-    } else if (version310){
-
-        GSWorkspace.prototype._computeLayout = function (windows){
-            var prev = Lang.bind(this, prevComputeLayout);
-            if (!extension.enabled) return prev(windows);
-
-            this._shellTileOverviewModifier = new OverviewModifier310(extension);
-            return this._shellTileOverviewModifier.computeLayout(windows, prev);
-        }
-
+    constructor (extension){
+        super();
+        this.extension = extension;
+        this.log = Log.getLogger("OverviewModifier338");
     }
 
-    OverviewModifier._registered = true;
+    getWindowSlots (containerBox){
+        const mod = this._shellTileOverviewModifier;
+        [, , containerBox] =
+            this._adjustSpacingAndPadding(null, null, containerBox);
+
+        const availArea = {
+            x: parseInt(containerBox.x1),
+            y: parseInt(containerBox.y1),
+            width: parseInt(containerBox.get_width()),
+            height: parseInt(containerBox.get_height()),
+        };
+
+        const slots = this._layout.strategy.computeWindowSlots(this._layout, availArea);
+        const explodedSlots = mod.explodeSlots(slots);
+        return explodedSlots;
+    }
+
+    createBestLayout (area){
+    	const mod = this._shellTileOverviewModifier;
+    	let [windows1, windowsIds1] = mod.simplifyWindows(this._sortedWindows);
+    	this._sortedWindowShellTile = windows1;
+        
+        const [rowSpacing, colSpacing] =
+            this._adjustSpacingAndPadding(this._spacing, this._spacing, null);
+
+        // We look for the largest scale that allows us to fit the
+        // largest row/tallest column on the workspace.
+        const strategy = new UnalignedLayoutStrategy(
+            Main.layoutManager.monitors[this._monitorIndex],
+            rowSpacing,
+            colSpacing);
+
+        let lastLayout = {};
+
+        for (let numRows = 1; ; numRows++){
+            let numColumns = Math.ceil(this._sortedWindowShellTile.length / numRows);
+
+            // If adding a new row does not change column count just stop
+            // (for instance: 9 windows, with 3 rows -> 3 columns, 4 rows ->
+            // 3 columns as well => just use 3 rows then)
+            if (numColumns === lastLayout.numColumns)
+                break;
+
+            let layout = { area, strategy, numRows, numColumns };
+            strategy.computeLayout(this._sortedWindowShellTile, layout);
+            strategy.computeScaleAndSpace(layout);
+
+            if (!this._isBetterLayout(lastLayout, layout))
+                break;
+
+            lastLayout = layout;
+        }
+
+        return lastLayout;
+    }
+
+}
+
+var OverviewModifier = class OverviewModifier{
+    static register(extension){
+        if (OverviewModifier._registered) return;
+
+        let prevComputeAllWindowSlots = GSWorkspace.prototype._computeAllWindowSlots;
+        let prevComputeLayout = GSWorkspace.prototype._computeLayout;
+        let prevCreateBestLayout = GSWorkspaceLayout.prototype._createBestLayout;
+        let prevGetWindowSlots = GSWorkspaceLayout.prototype._getWindowSlots;
+    
+        let version38 = Util.versionCompare(Config.PACKAGE_VERSION, "3.7") >= 0 && Util.versionCompare(Config.PACKAGE_VERSION, "3.9") < 0;
+        version38 = version38 && prevComputeAllWindowSlots;
+    
+        let version310 = Util.versionCompare(Config.PACKAGE_VERSION, "3.9") >= 0;
+        version310 = version310 && prevComputeLayout;
+        
+        let version338 = Util.versionCompare(Config.PACKAGE_VERSION, "3.38") >= 0;
+        version338 = version338 && prevCreateBestLayout && prevGetWindowSlots;
+        
+    
+        if (version38){
+    
+            GSWorkspace.prototype._computeAllWindowSlots = function (windows){
+                var prev = Lang.bind(this, prevComputeAllWindowSlots);
+                if (!extension.enabled) return prev(windows);
+    
+                this._shellTileOverviewModifier = new OverviewModifier38(extension);
+                return this._shellTileOverviewModifier.computeWindowSlots(windows, prev);
+            }
+    
+        } else if (version310){
+    
+            GSWorkspace.prototype._computeLayout = function (windows){
+                var prev = Lang.bind(this, prevComputeLayout);
+                if (!extension.enabled) return prev(windows);
+    
+                this._shellTileOverviewModifier = new OverviewModifier310(extension);
+                return this._shellTileOverviewModifier.computeLayout(windows, prev);
+            }
+    
+        } else if (version338){
+            GSWorkspaceLayout.prototype._createBestLayout = function (area){
+                let prev = Lang.bind(this, prevCreateBestLayout);
+                if (!extension.enabled) return prev(area);
+                
+                if (!this._shellTileOverviewModifier)
+                	this._shellTileOverviewModifier = new OverviewModifier338(extension);
+                return this._shellTileOverviewModifier.createBestLayout.bind(this)(area, prev);
+            }
+            
+            GSWorkspaceLayout.prototype._getWindowSlots = function (area){
+                let prev = Lang.bind(this, prevGetWindowSlots);
+                if (!extension.enabled) return prev(area);
+                return this._shellTileOverviewModifier.getWindowSlots.bind(this)(area, prev);
+            }
+        }
+    
+        OverviewModifier._registered = true;
+    }
 }

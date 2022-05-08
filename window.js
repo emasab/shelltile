@@ -2,56 +2,55 @@ const Main = imports.ui.main;
 const Lang = imports.lang;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
+const Mainloop = imports.mainloop;
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 
-function Window(meta_window, ext){
-    this._init(meta_window, ext);
-}
+var Window = class Window{
 
-// This seems to be a good set, from trial and error...
-Window.tileable_window_types = [
-    Meta.WindowType.NORMAL
-];
+    static get_id (w){
+        if (!w || !w.get_stable_sequence){
+            Log.getLogger("shelltile").error("Non-window object: " + w);
+        }
+        return w.get_stable_sequence();
+    }
 
-// TODO: expose this as a preference if it gets used much
-Window.blacklist_classes = [
-    'Conky'
-];
-
-Window.MINIMUM_MOVE_FOR_DETACH = 30
-
-Window.prototype = {
-    _init: function (meta_window, ext){
-        this._windowTracker = Shell.WindowTracker.get_default();
+    constructor(meta_window, ext){
         this.meta_window = meta_window;
         this.extension = ext;
         this.log = Log.getLogger("Window");
         this.group = null;
-    },
-    
-    bring_to_front: function (){
-        // NOOP (TODO: remove)
-    },
-    is_active: function (){
-        return this.ext.current_window() === this;
-    },
-    activate: function (){
-        Main.activateWindow(this.meta_window);
-    },
-    is_minimized: function (){
-        return this.meta_window.minimized;
-    },
-    
-    is_maximized: function (){
-        return this.meta_window.maximized_horizontally || this.meta_window.maximized_vertically;
-    },
-    
-    before_group: function (){
-        if (!this.before_group_size) this.before_group_size = this.outer_rect();
-    },
+        this.move_promises = [];
+        this.resize_promises = [];
+        this.min_size = {width: 1, height: 1};
+    }
 
-    has_moved_enough_for_detach: function(){
+
+    bring_to_front(){
+        // NOOP (TODO: remove)
+    }
+
+    is_active (){
+        return this.ext.current_window() === this;
+    }
+
+    activate (){
+        Main.activateWindow(this.meta_window);
+    }
+
+    is_minimized (){
+        return this.meta_window.minimized;
+    }
+
+    is_maximized (){
+        return this.meta_window.maximized_horizontally || this.meta_window.maximized_vertically;
+    }
+    
+    before_group (){
+        if (!this.before_group_size) this.before_group_size = this.outer_rect();
+    }
+
+    has_moved_enough_for_detach (){
         if(!this.saved_position) return false;
         else {
             var dist = Math.sqrt(
@@ -60,9 +59,9 @@ Window.prototype = {
             );
             return dist > Window.MINIMUM_MOVE_FOR_DETACH;
         }
-    },
+    }
     
-    after_group: function (keep_position){
+    async after_group (keep_position){
         if (this.before_group_size){
             var bounds = this.get_maximized_bounds();
             if (bounds){
@@ -77,46 +76,33 @@ Window.prototype = {
                     if (current.y < bounds.y) current.y = bounds.y;
                 }
 
-                this.move_resize(current.x, current.y, current.width, current.height);
+                await this.move_resize(current.x, current.y, current.width, current.height);
                 delete this.before_group_size;
             }
         }
-    },
+    }
     
-    minimize: function (){
+    minimize (){
         this.meta_window.minimize();
-    },
+    }
     
-    maximize: function (){
+    maximize (){
         this.meta_window.maximize(Meta.MaximizeFlags.VERTICAL | Meta.MaximizeFlags.HORIZONTAL);
-    },
+    }
     
-    unmaximize: function (){
+    unmaximize (){
         this.meta_window.unmaximize(Meta.MaximizeFlags.VERTICAL | Meta.MaximizeFlags.HORIZONTAL);
-    },
+    }
     
-    unminimize: function (){
+    unminimize (){
         this.meta_window.unminimize();
-    },
+    }
     
-    showing_on_its_workspace: function (){
+    showing_on_its_workspace (){
         return this.meta_window.showing_on_its_workspace();
-    },
+    }
     
-    before_redraw: function (func){
-        //TODO: idle seems to be the only LaterType that reliably works; but
-        // it causes a visual flash. before_redraw would be better, but that
-        // doesn't seem to be late enough in the layout cycle to move windows around
-        // (which is what this hook is used for).
-        Meta.later_add(
-            Meta.LaterType.IDLE, //when
-            func, //func
-            null, //data
-            null //notify
-        )
-    },
-    
-    on_move_to_workspace: function (workspace){
+    async on_move_to_workspace (workspace){
 
         delete this.marked_for_remove;
 
@@ -124,67 +110,132 @@ Window.prototype = {
             this.group.move_to_workspace(workspace);
             var group = this.group.get_topmost_group();
             if (this.extension.keep_maximized){
-                group.maximize_size();
+                await group.maximize_size();
             }
             group.raise();
             group.save_bounds();
         }
-    },
+    }
     
-    on_move_to_monitor: function (metaScreen, monitorIndex){
+    async on_move_to_monitor (metaScreen, monitorIndex){
         delete this.marked_for_remove;
         if (this.group){
-            this.update_geometry(true, false);
+            await this.update_geometry(true, false);
         }
-    },
+    }
     
-    save_bounds: function (){
+    save_bounds (){
         this.save_position();
         this.save_size();
-    },
+    }
     
-    save_position: function (){
+    save_position (){
         this.saved_position = this.outer_rect();
-    },
+    }
     
-    save_size: function (){
+    save_size (){
         this.saved_size = this.outer_rect();
-    },
+    }
     
-    move_to_workspace: function (workspace){
+    move_to_workspace (workspace){
         if (!workspace) return;
         this.meta_window.change_workspace(workspace.meta_workspace);
         delete this.marked_for_remove;
-    },
+    }
     
-    move_to_monitor: function (idx){
+    move_to_monitor (idx){
         this.meta_window.move_to_monitor(idx);
         delete this.marked_for_remove;
-    },
+    }
+
+    create_promise (timeout = 100){
+        var tmp = {};
+        var ret = new Promise((resolve, reject) => {
+            Object.assign(tmp, {resolve: resolve, reject: reject});
+        })
+        Object.assign(ret, tmp);
+        Mainloop.timeout_add(timeout, ()=>ret.resolve());
+        return ret;
+    }
+
+    next_move (){
+        const move_promise = this.create_promise()
+        move_promise.catch(()=>{})
+        this.move_promises.push(move_promise);
+        return move_promise;
+    }
+
+    next_resize (){
+        const resize_promise = this.create_promise()
+        resize_promise.catch(()=>{})
+        this.resize_promises.push(resize_promise);
+        return resize_promise;
+    }
+
+    get_min_size (){
+        return Object.assign({}, this.min_size);
+    }
     
-    move_resize: function (x, y, w, h){
-        this.meta_window.move_resize_frame(true, x, y, w, h);
-        this.meta_window.move_frame(true, x, y);
-        if (!this.saved_position) this.saved_position = {};
-        if (!this.saved_size) this.saved_size = {};
+    async move_resize(x, y, w, h){
+        let outer_rect = this.outer_rect();
+        if (!this.saved_position){
+            this.saved_position = {x: outer_rect.x, y: outer_rect.y};
+        }
+        if (!this.saved_size){
+            this.saved_size = {width: outer_rect.width, height: outer_rect.height};
+        }
+        const is_move = x !== outer_rect.x ||
+                        y !== outer_rect.y;
+        const is_resize = w !== outer_rect.width || 
+                        h !== outer_rect.height;
+
         this.saved_position.x = x;
         this.saved_position.y = y;
         this.saved_size.width = w;
         this.saved_size.height = h;
-    },
+
+        const promises = [];
+        if(is_move){
+            const move_promise = this.next_move();
+            promises.push(move_promise);
+            this.meta_window.move_frame(true, x, y);
+        }
+        if(is_resize){
+            const resize_promise = this.next_resize()
+            promises.push(resize_promise);
+            this.meta_window.move_resize_frame(true, x, y, w, h);
+        }
+        const ret = await Promise.all(promises);
+        if(is_resize){
+            let outer_rect_after = this.outer_rect();
+            if (outer_rect_after.width > w) this.min_size.width = outer_rect_after.width;
+            if (outer_rect_after.height > h) this.min_size.height = outer_rect_after.height;
+        }
+        return ret;
+    }
+
+    resolve_move_promises (descending){
+        this.move_promises.map(p => p.resolve(null));
+        this.move_promises = [];
+    }
+
+    resolve_resize_promises (descending){
+        this.resize_promises.map(p => p.resolve(null));
+        this.resize_promises = [];
+    }
     
-    get_title: function (){
+    get_title (){
         return this.meta_window.get_title();
-    },
-    toString: function (){
+    }
+    toString (){
         return ("<#Window with MetaWindow: " + this.get_title() + ">");
-    },
+    }
     
-    is_resizeable: function (){
+    is_resizeable (){
         return this.meta_window.resizeable;
-    },
+    }
     
-    window_type: function (){
+    window_type (){
         try {
             return this.meta_window['window-type'];
         } catch (e){
@@ -192,25 +243,25 @@ Window.prototype = {
             if (this.log.is_error()) this.log.error("Failed to get window type for window " + this.meta_window + ", error was:", e);
             return -1;
         }
-    },
-    window_class: function (){
+    }
+    window_class (){
         return this.meta_window.get_wm_class();
-    },
-    is_shown_on_taskbar: function (){
+    }
+    is_shown_on_taskbar (){
         return !this.meta_window.is_skip_taskbar();
-    },
-    floating_window: function (){
+    }
+    floating_window (){
         //TODO: add check for this.meta_window.below when mutter exposes it as a property;
         return this.meta_window.above;
-    },
-    on_all_workspaces: function (){
+    }
+    on_all_workspaces (){
         return this.meta_window.is_on_all_workspaces();
-    },
-    should_auto_tile: function (){
+    }
+    should_auto_tile (){
         return this.can_be_tiled() && this.is_resizeable() &&
             !(this.floating_window() || this.on_all_workspaces());
-    },
-    can_be_tiled: function (){
+    }
+    can_be_tiled (){
         if (this.meta_window.is_skip_taskbar()){
             //if(this.log.is_debug()) this.log.debug("uninteresting window: " + this);
             return false;
@@ -226,40 +277,40 @@ Window.prototype = {
         var result = Window.tileable_window_types.indexOf(window_type) != -1;
 
         return result;
-    },
+    }
     
-    id: function (){
+    id (){
         return Window.get_id(this.meta_window);
-    },
+    }
     
-    eq: function (other){
+    eq (other){
         let eq = this.id() == other.id();
         if (eq && (this != other)){
             if (this.log.is_warn()) this.log.warn("Multiple wrappers for the same MetaWindow created: " + this);
         }
         return eq;
-    },
+    }
     
-    get_workspace: function (){
+    get_workspace (){
         var meta_workspace = this.meta_window.get_workspace();
         if (meta_workspace){
             return this.extension.get_workspace(meta_workspace);
         } else return null;
-    },
+    }
     
-    get_actor: function (){
+    get_actor (){
         return this.meta_window.get_compositor_private();
-    },
+    }
     
-    has_real_window: function (){
+    has_real_window (){
         return true;
-    },
+    }
     
-    has_hole: function (){
+    has_hole (){
         return false;
-    },
+    }
     
-    get_maximized_bounds: function (cursor){
+    get_maximized_bounds (cursor){
 
         if (cursor) var monitor = Main.layoutManager.currentMonitor.index;
         else var monitor = Main.layoutManager.findMonitorForActor(this.get_actor()).index;
@@ -275,15 +326,15 @@ Window.prototype = {
             width: ret.width,
             height: ret.height
         });
-    },
+    }
     
-    maximize_size: function (){
+    maximize_size (){
         var bounds = this.get_maximized_bounds();
         this.maximize();
-        this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
-    },
+        return this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
+    }
     
-    get_boundary_edges: function (group_size, current_size){
+    get_boundary_edges (group_size, current_size){
 
         var ret = Window.NO_EDGES;
 
@@ -313,9 +364,13 @@ Window.prototype = {
 
         return ret;
 
-    },
+    }
+
+    has_position_size_changed (){
+        return this.get_modified_edges(this.saved_size, this.outer_rect());
+    }
     
-    get_modified_edges: function (saved_size, current_size){
+    get_modified_edges (saved_size, current_size){
 
         var ret = Window.NO_EDGES;
 
@@ -346,9 +401,9 @@ Window.prototype = {
         return ret;
 
 
-    },
+    }
     
-    update_geometry: function (changed_position, changed_size){
+    async update_geometry (changed_position, changed_size){
         if (this.group){
 
             var same_size = true;
@@ -404,36 +459,44 @@ Window.prototype = {
 
 
             if (same_size){
-                this.group.update_geometry(this);
+                await this.group.update_geometry(this);
             } else {
-                group.move_resize(group.saved_position.x, group.saved_position.y, group.saved_size.width, group.saved_size.height);
+                await group.move_resize(group.saved_position.x, group.saved_position.y, group.saved_size.width, group.saved_size.height);
                 group.save_bounds();
                 group.forget_last_bounds();
             }
 
         }
-    },
+    }
     
-    raise: function (){
+    raise (){
         if (this.marked_for_remove) return;
         this.unminimize();
         this.meta_window.raise();
-    },
+    }
+
     // dimensions
-    
-    width: function (){
+    width (){
         return this.outer_rect().width;
-    },
-    height: function (){
+    }
+    height (){
         return this.outer_rect().height;
-    },
-    xpos: function (){
+    }
+    xpos (){
         return this.outer_rect().x;
-    },
-    ypos: function (){
+    }
+    ypos (){
         return this.outer_rect().y;
-    },
-    outer_rect: function (){
+    }
+    real_outer_rect (){
+        if (this.meta_window.get_frame_rect) return this.meta_window.get_frame_rect();
+        else {
+            // removed in 3.16
+            return this.meta_window.get_outer_rect();
+        }
+    }
+
+    outer_rect (){
         if (this.is_maximized() && this.saved_size){
             var ret = this.saved_size;
             if (this.saved_position){
@@ -442,33 +505,32 @@ Window.prototype = {
             }
             return ret;
         } else {
-            if (this.meta_window.get_frame_rect) return this.meta_window.get_frame_rect();
-            else {
-                // removed in 3.16
-                return this.meta_window.get_outer_rect();
-            }
+            return this.real_outer_rect();
         }
-    },
-    get_monitor: function (){
+    }
+    get_monitor (){
         return this.meta_window.get_monitor();
-    },
+    }
     
-    clone: function (){
+    clone (){
         var ret = new Window(this.meta_window, this.extension);
         ret.group = this.group;
         return ret;
     }
-};
-
-Window.NO_EDGES = parseInt("0000", 2)
-Window.RIGHT_EDGE = parseInt("0001", 2)
-Window.BOTTOM_EDGE = parseInt("0010", 2)
-Window.LEFT_EDGE = parseInt("0100", 2)
-Window.TOP_EDGE = parseInt("1000", 2)
-
-Window.get_id = function (w){
-    if (!w || !w.get_stable_sequence){
-        Log.getLogger("shelltile").error("Non-window object: " + w);
-    }
-    return w.get_stable_sequence();
 }
+
+Window.tileable_window_types = [
+    Meta.WindowType.NORMAL
+];
+
+Window.blacklist_classes = [
+    'Conky'
+];
+
+Window.MINIMUM_MOVE_FOR_DETACH = 30;
+
+Window.NO_EDGES = parseInt("0000", 2);
+Window.RIGHT_EDGE = parseInt("0001", 2);
+Window.BOTTOM_EDGE = parseInt("0010", 2);
+Window.LEFT_EDGE = parseInt("0100", 2);
+Window.TOP_EDGE = parseInt("1000", 2);

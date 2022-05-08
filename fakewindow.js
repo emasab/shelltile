@@ -5,12 +5,9 @@ const Shell = imports.gi.Shell;
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 
-function FakeWindow(){
-    this._init.apply(this, arguments);
-}
 
-FakeWindow.prototype = {
-    _init: function (extension, win){
+var FakeWindow = class FakeWindow{
+    constructor(extension, win){
         this.log = Log.getLogger("FakeWindow");
         this.x = 0;
         this.y = 0;
@@ -24,181 +21,192 @@ FakeWindow.prototype = {
             var bounds = win.outer_rect();
             this.move_resize(bounds.x, bounds.y, bounds.width, bounds.height);
         }
-    },
-    
-    bring_to_front: function (){},
-    is_active: function (){
+    }
+
+    bring_to_front (){}
+    is_active (){
         return false;
-    },
-    activate: function (){},
-    is_minimized: function (){
+    }
+    activate (){}
+    is_minimized (){
         return false;
-    },
+    }
     
-    is_maximized: function (){
+    is_maximized (){
         return false;
-    },
+    }
     
-    before_group: function (){},
+    before_group (){}
     
-    after_group: function (keep_position){},
+    async after_group (keep_position){}
     
-    minimize: function (){},
+    minimize (){}
     
-    maximize: function (){},
+    maximize (){}
     
-    unmaximize: function (){},
+    unmaximize (){}
     
-    unminimize: function (){},
+    unminimize (){}
     
-    showing_on_its_workspace: function (){
+    showing_on_its_workspace (){
         return true;
-    },
+    }
     
-    before_redraw: function (func){},
+    before_redraw (func){}
     
-    on_move_to_workspace: function (workspace){},
+    on_move_to_workspace (workspace){}
     
-    on_move_to_monitor: function (metaScreen, monitorIndex){},
+    on_move_to_monitor (metaScreen, monitorIndex){}
     
-    save_bounds: function (){
+    save_bounds (){
         this.save_position();
         this.save_size();
-    },
+    }
     
-    save_position: function (){
+    save_position (){
         this.saved_position = this.outer_rect();
-    },
+    }
     
-    save_size: function (){
+    save_size (){
         this.saved_size = this.outer_rect();
-    },
+    }
     
-    move_to_workspace: function (workspace){},
+    move_to_workspace (workspace){}
     
-    move_to_monitor: function (idx){},
+    move_to_monitor (idx){}
     
-    move_resize: function (x, y, w, h){
+    get_min_size (){
+        return {width: 0, height: 0};
+    }
+
+    move_resize (x, y, w, h){
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
-    },
+    }
+
+    resolve_promises (descending){}
     
-    get_title: function (){
+    get_title (){
         return this.id();
-    },
-    toString: function (){
+    }
+    toString (){
         return ("<#Window FakeWindow: " + this.get_title() + ">");
-    },
+    }
     
-    is_resizeable: function (){
+    is_resizeable (){
         return true;
-    },
+    }
     
-    window_type: function (){
+    window_type (){
         return -1;
-    },
-    window_class: function (){
+    }
+    window_class (){
         return -1;
-    },
-    is_shown_on_taskbar: function (){
+    }
+    is_shown_on_taskbar (){
         return false;
-    },
-    floating_window: function (){
+    }
+    floating_window (){
         return false;
-    },
-    on_all_workspaces: function (){
+    }
+    on_all_workspaces (){
         return false;
-    },
-    should_auto_tile: function (){
+    }
+    should_auto_tile (){
         return true;
-    },
-    can_be_tiled: function (){
+    }
+    can_be_tiled (){
         return true;
-    },
+    }
     
-    id: function (){
+    id (){
         if (!this._id) this._id = "fake_window_" + FakeWindow.last_id++;
         return this._id;
-    },
+    }
     
-    eq: function (other){
+    eq (other){
         let eq = this.id() == other.id();
         if (eq && (this != other)){
             if (this.log.is_warn()) this.log.warn("Multiple wrappers for the same MetaWindow created: " + this);
         }
         return eq;
-    },
+    }
     
-    get_workspace: function (){
+    get_workspace (){
         if (this.original_win) return this.original_win.get_workspace();
-    },
+    }
     
-    get_actor: function (){
+    get_actor (){
         return null;
-    },
+    }
     
-    has_real_window: function (){
+    has_real_window (){
         return !!this.original_win;
-    },
+    }
     
-    has_hole: function (){
+    has_hole (){
         return true;
-    },
+    }
     
-    get_maximized_bounds: function (cursor){
+    get_maximized_bounds (cursor){
         if (this.original_win){
             return this.original_win.get_maximized_bounds(cursor);
         }
-    },
+    }
     
-    maximize_size: function (){
+    maximize_size (){
         return null;
-    },
+    }
     
-    get_boundary_edges: function (group_size, current_size){
-        return null;
-
-    },
-    
-    get_modified_edges: function (saved_size, current_size){
+    get_boundary_edges (group_size, current_size){
         return null;
 
-    },
+    }
     
-    update_geometry: function (changed_position, changed_size){},
+    get_modified_edges (saved_size, current_size){
+        return null;
+
+    }
     
-    raise: function (){},
+    update_geometry (changed_position, changed_size){}
+    
+    raise (){}
     // dimensions
     
-    width: function (){
+    width (){
         return this.outer_rect().width;
-    },
-    height: function (){
+    }
+    height (){
         return this.outer_rect().height;
-    },
-    xpos: function (){
+    }
+    xpos (){
         return this.outer_rect().x;
-    },
-    ypos: function (){
+    }
+    ypos (){
         return this.outer_rect().y;
-    },
-    outer_rect: function (){
+    }
+
+    real_outer_rect (){
+        return this.outer_rect();
+    }
+
+    outer_rect (){
         return new Meta.Rectangle({
             x: this.x,
             y: this.y,
             width: this.w,
             height: this.h
         });
-    },
-    get_monitor: function (){
+    }
+    get_monitor (){
         return null;
-    },
+    }
     
-    clone: function (){
+    clone (){
         return new FakeWindow();
     }
-};
+}
 
 FakeWindow.last_id = 0;
