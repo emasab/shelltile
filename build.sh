@@ -2,7 +2,7 @@
 # https://extensions.gnome.org/extension/657/shelltile/
 if [ -z "$1" ]; then
 
-    zip -r ShellTile@emasab.it.zip *.js *.json *.css schemas/ locale/ -x *.pot -x *.po
+    zip -r ShellTile@emasab.it.zip *.js metadata.json *.css schemas/ locale/ -x *.pot -x *.po
 	
 
 elif [ "$1" = "pot" ]; then

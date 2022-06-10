@@ -2,7 +2,6 @@ const Main = imports.ui.main;
 const Meta = imports.gi.Meta;
 const Gio = imports.gi.Gio;
 const Shell      = imports.gi.Shell;
-const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Extension = ExtensionUtils.getCurrentExtension();
@@ -20,30 +19,75 @@ const Compatibility = Extension.imports.util.Compatibility;
 class Ext{
     
     constructor(){
-        let OVERRIDE_SCHEMA = "org.gnome.shell.overrides";
-        let MUTTER_SCHEMA = "org.gnome.mutter";
+        this._log = undefined;
+        this._gnome_shell_settings = undefined;
+        this._gnome_mutter_settings = undefined;
+        this._settings = undefined;
+        this._strategy = undefined;
+        this._compatibility = undefined;
+        this.__wsmgr = undefined;
     
-        this.log = Log.getLogger("Ext");
-    
-        this.gnome_shell_settings = Convenience.getSettings(OVERRIDE_SCHEMA);
-        this.gnome_mutter_settings = Convenience.getSettings(MUTTER_SCHEMA);
-        this.settings = Convenience.getSettings();
-    
-        this.enabled = false;
-        this.calling = false;
         this.enable_keybindings = undefined;
         this.tile_left_accel = undefined;
         this.tile_right_accel = undefined;
         this.tile_top_accel = undefined;
         this.tile_bottom_accel = undefined;
+        this.enabled = false;
+        this.calling = false;
     
         this.workspaces = {};
         this.windows = {};
-        this.strategy = new DefaultTilingStrategy(this);
-    
         this._shellwm = global.window_manager;
-        this._wsmgr = Compatibility.get_workspace_manager();
         this._shortcuts_binding_ids = [];
+    }
+
+    get compatibility(){
+        if (!this._compatibility){
+            this._compatibility = new Compatibility();
+        }
+        return this._compatibility;
+    }
+
+    get _wsmgr(){
+        if (!this.__wsmgr){
+            this.__wsmgr = this.compatibility.get_workspace_manager();
+        }
+        return this.__wsmgr;
+    }
+
+    get gnome_shell_settings(){
+        if (!this._gnome_shell_settings){
+            this._gnome_shell_settings = Convenience.getSettings("org.gnome.shell.overrides");
+        }
+        return this._gnome_shell_settings;
+    }
+
+    get gnome_mutter_settings(){
+        if (!this._gnome_mutter_settings){
+            this._gnome_mutter_settings = Convenience.getSettings("org.gnome.mutter");
+        }
+        return this._gnome_mutter_settings;
+    }
+
+    get settings(){
+        if (!this._settings){
+            this._settings = Convenience.getSettings();
+        }
+        return this._settings;
+    }
+
+    get strategy(){
+        if(!this._strategy){
+            this._strategy = new DefaultTilingStrategy(this);
+        }
+        return this._strategy;
+    }
+
+    get log(){
+        if (!this._log){
+            this._log = Log.getLogger("Ext");
+        }
+        return this._log;
     }
 
     connect_and_track (owner, subject, name, cb, realsubject){
@@ -138,7 +182,7 @@ class Ext{
     }
 
     current_display (){
-        return Compatibility.get_display();
+        return this.compatibility.get_display();
     }
 
     current_window (){
@@ -155,7 +199,7 @@ class Ext{
     }
 
     on_remove_workspace (wm, index){
-        Mainloop.idle_add(Lang.bind(this, function (){
+        Mainloop.idle_add(() => {
             var removed_meta = null;
             var removed_ws = null;
             for (let k in this.workspaces){
@@ -177,8 +221,7 @@ class Ext{
                 this.remove_workspace(removed_meta);
             }
             return false;
-
-        }));
+        });
     }
 
     remove_workspace (removed_meta){
@@ -267,8 +310,8 @@ class Ext{
             //if(this.log.is_debug()) this.log.debug("enabling ShellTile");
 
             this.enabled = true;
-            this.screen = Compatibility.get_screen();
-            this.display = Compatibility.get_display();
+            this.screen = this.compatibility.get_screen();
+            this.display = this.compatibility.get_display();
 
             this.load_settings();
             this.remove_default_keybindings();
@@ -284,19 +327,19 @@ class Ext{
                 var on_window_entered_monitor = this.break_loops(this.window_entered_monitor);
                 var on_window_create = this.on_window_create;
                 
-                this.connect_and_track(this, this.gnome_shell_settings, 'changed', Lang.bind(this, this.on_settings_changed));
-                this.connect_and_track(this, this.gnome_mutter_settings, 'changed', Lang.bind(this, this.on_settings_changed));
-                this.connect_and_track(this, this.settings, 'changed', Lang.bind(this, this.on_settings_changed));
-                this.connect_and_track(this, this.screen, 'window-entered-monitor', Lang.bind(this, on_window_entered_monitor));
-                this.connect_and_track(this, this.display, 'window_created', Lang.bind(this, on_window_create));
+                this.connect_and_track(this, this.gnome_shell_settings, 'changed', this.on_settings_changed.bind(this));
+                this.connect_and_track(this, this.gnome_mutter_settings, 'changed', this.on_settings_changed.bind(this));
+                this.connect_and_track(this, this.settings, 'changed', this.on_settings_changed.bind(this));
+                this.connect_and_track(this, this.screen, 'window-entered-monitor', on_window_entered_monitor.bind(this));
+                this.connect_and_track(this, this.display, 'window_created', on_window_create.bind(this));
 
                 if (Util.versionCompare(undefined, "3.18") >= 0){
-                    this.connect_and_track(this, this._shellwm, 'size-change', Lang.bind(this, on_window_manager_window_size_change));
-                    this.connect_and_track(this, this._shellwm, 'minimize', Lang.bind(this, on_window_minimize));
+                    this.connect_and_track(this, this._shellwm, 'size-change', on_window_manager_window_size_change.bind(this));
+                    this.connect_and_track(this, this._shellwm, 'minimize', on_window_minimize.bind(this));
                 } else {
-                    this.connect_and_track(this, this._shellwm, 'maximize', Lang.bind(this, on_window_maximize));
-                    this.connect_and_track(this, this._shellwm, 'unmaximize', Lang.bind(this, on_window_unmaximize));
-                    this.connect_and_track(this, this._shellwm, 'minimize', Lang.bind(this, on_window_minimize));
+                    this.connect_and_track(this, this._shellwm, 'maximize', on_window_maximize.bind(this));
+                    this.connect_and_track(this, this._shellwm, 'unmaximize', on_window_unmaximize.bind(this));
+                    this.connect_and_track(this, this._shellwm, 'minimize', on_window_minimize.bind(this));
                 }
 
                 if(this.enable_keybindings){
@@ -340,7 +383,7 @@ class Ext{
             this.settings,
             Meta.KeyBindingFlags.NONE,
             ModeType.ALL,
-            Lang.bind(this, cb)
+            cb.bind(this)
         );
 
         this._shortcuts_binding_ids.push(name);
@@ -355,10 +398,10 @@ class Ext{
         let actor = meta_window.get_compositor_private();
         if (!actor){
             if (!second_try){
-                Mainloop.idle_add(Lang.bind(this, function (){
+                Mainloop.idle_add(() => {
                     this.on_window_create(display, meta_window, true);
                     return false;
-                }));
+                });
             }
             return;
         }
@@ -381,7 +424,7 @@ class Ext{
         if(win.marked_for_remove) return;
         win.marked_for_remove = true;
 
-        Mainloop.idle_add(Lang.bind(this, function (){
+        Mainloop.idle_add(() => {
             if (win.marked_for_remove){
                 if (this.strategy && this.strategy.on_window_remove){
                     this.strategy.on_window_remove(win).then(()=>{
@@ -391,7 +434,7 @@ class Ext{
                 }
             }
             return false;
-        }));
+        });
         //if(this.log.is_debug()) this.log.debug("window removed " + win);
     }
 
@@ -555,7 +598,7 @@ class Ext{
             }
         }
 
-        return Lang.bind(this, function (relevant_grabs, cb, cb_final){
+        return (relevant_grabs, cb, cb_final) => {
             var active = false;
             var grab_begin = async function (display, screen, window, grab_op){
                 if(!window) return;
@@ -587,10 +630,9 @@ class Ext{
             }
 
 
-            this.connect_and_track(this, win, 'grab-op-begin', Lang.bind(this, grab_begin), this.display);
-            this.connect_and_track(this, win, 'grab-op-end', Lang.bind(this, grab_end), this.display);
-        });
-
+            this.connect_and_track(this, win, 'grab-op-begin', grab_begin.bind(this), this.display);
+            this.connect_and_track(this, win, 'grab-op-end', grab_end.bind(this), this.display);
+        };
     }
 
     disconnect_window (win){
@@ -613,7 +655,7 @@ class Ext{
         let bind_to_window_change = this.bind_to_window_change(win, actor);
 
         var on_window_remove = this.break_loops(this.on_window_remove);
-        this.connect_and_track(this, meta_window, 'unmanaged', Lang.bind(this, this.on_window_remove));
+        this.connect_and_track(this, meta_window, 'unmanaged', this.on_window_remove.bind(this));
 
         let move_ops = [
             Meta.GrabOp.MOVING,
@@ -647,12 +689,12 @@ class Ext{
         var on_window_size_changed = this.on_window_size_changed;
         var on_window_position_changed = this.on_window_position_changed;
 
-        bind_to_window_change(move_ops, Lang.bind(this, on_window_move), Lang.bind(this, on_window_moved));
-        bind_to_window_change(resize_ops, Lang.bind(this, on_window_resize), Lang.bind(this, on_window_resized));
-        this.connect_and_track(this, meta_window, 'raised', Lang.bind(this, on_window_raised));
-        this.connect_and_track(this, meta_window, "workspace_changed", Lang.bind(this, on_workspace_changed));
-        this.connect_and_track(this, meta_window, 'position-changed', Lang.bind(this, on_window_position_changed));
-        this.connect_and_track(this, meta_window, 'size-changed', Lang.bind(this, on_window_size_changed));
+        bind_to_window_change(move_ops, on_window_move.bind(this), on_window_moved.bind(this));
+        bind_to_window_change(resize_ops, on_window_resize.bind(this), on_window_resized.bind(this));
+        this.connect_and_track(this, meta_window, 'raised', on_window_raised.bind(this));
+        this.connect_and_track(this, meta_window, "workspace_changed", on_workspace_changed.bind(this));
+        this.connect_and_track(this, meta_window, 'position-changed', on_window_position_changed.bind(this));
+        this.connect_and_track(this, meta_window, 'size-changed', on_window_size_changed.bind(this));
         win._connected = true;
     }
 
@@ -674,8 +716,4 @@ class Ext{
 function init(){
     let ext = new Ext();
     return ext
-}
-
-function main(){
-    init().enable();
 }

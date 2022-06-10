@@ -1,11 +1,8 @@
 const Mainloop = imports.mainloop;
-const Lang = imports.lang;
 const Meta = imports.gi.Meta;
 const Main = imports.ui.main;
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
-const Compatibility = Extension.imports.util.Compatibility;
-
 
 var Workspace = class Workspace{
     constructor(meta_workspace, ext, strategy){
@@ -14,10 +11,11 @@ var Workspace = class Workspace{
         this.meta_workspace = meta_workspace;
         this.extension = ext;
         this.strategy = strategy
+        this._compatibility = this.extension.compatibility;
         if(this.log.is_debug()) this.log.debug(this.toString());
-        this.meta_windows().map(Lang.bind(this, function (win){
+        this.meta_windows().map((win) => {
             this.extension.on_window_create(null, win);
-        }));
+        });
     }
 
 
@@ -46,7 +44,7 @@ var Workspace = class Workspace{
             return win.get_workspace() === self.meta_workspace;
         });
 
-        wins = Compatibility.get_display().sort_windows_by_stacking(wins);
+        wins = this._compatibility.get_display().sort_windows_by_stacking(wins);
 
         return wins;
     }

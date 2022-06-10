@@ -3,7 +3,6 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Extension = ExtensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 const Util = Extension.imports.util;
-const Lang = imports.lang;
 const Meta = imports.gi.Meta;
 const Main = imports.ui.main;
 const GSWorkspace = imports.ui.workspace.Workspace;
@@ -370,7 +369,7 @@ class OverviewModifier310 extends OverviewModifierBase{
         var prevComputeWindowSlots = layout.strategy.computeWindowSlots;
         layout.strategy.computeWindowSlots = function (layout, area){
 
-            var prevC = Lang.bind(this, prevComputeWindowSlots);
+            var prevC = prevComputeWindowSlots.bind(this);
             var slots = prevC(layout, area);
 
             return me.explodeSlots(slots);
@@ -451,10 +450,10 @@ var OverviewModifier = class OverviewModifier{
     static register(extension){
         if (OverviewModifier._registered) return;
 
-        let prevComputeAllWindowSlots = GSWorkspace.prototype._computeAllWindowSlots;
-        let prevComputeLayout = GSWorkspace.prototype._computeLayout;
-        let prevCreateBestLayout = GSWorkspaceLayout.prototype._createBestLayout;
-        let prevGetWindowSlots = GSWorkspaceLayout.prototype._getWindowSlots;
+        let prevComputeAllWindowSlots = GSWorkspace && GSWorkspace.prototype._computeAllWindowSlots;
+        let prevComputeLayout = GSWorkspace && GSWorkspace.prototype._computeLayout;
+        let prevCreateBestLayout = GSWorkspaceLayout && GSWorkspaceLayout.prototype._createBestLayout;
+        let prevGetWindowSlots = GSWorkspaceLayout && GSWorkspaceLayout.prototype._getWindowSlots;
     
         let version38 = Util.versionCompare(Config.PACKAGE_VERSION, "3.7") >= 0 && Util.versionCompare(Config.PACKAGE_VERSION, "3.9") < 0;
         version38 = version38 && prevComputeAllWindowSlots;
@@ -469,7 +468,7 @@ var OverviewModifier = class OverviewModifier{
         if (version38){
     
             GSWorkspace.prototype._computeAllWindowSlots = function (windows){
-                var prev = Lang.bind(this, prevComputeAllWindowSlots);
+                var prev = prevComputeAllWindowSlots.bind(this);
                 if (!extension.enabled) return prev(windows);
     
                 this._shellTileOverviewModifier = new OverviewModifier38(extension);
@@ -479,7 +478,7 @@ var OverviewModifier = class OverviewModifier{
         } else if (version310){
     
             GSWorkspace.prototype._computeLayout = function (windows){
-                var prev = Lang.bind(this, prevComputeLayout);
+                var prev = prevComputeLayout.bind(this);
                 if (!extension.enabled) return prev(windows);
     
                 this._shellTileOverviewModifier = new OverviewModifier310(extension);
@@ -488,7 +487,7 @@ var OverviewModifier = class OverviewModifier{
     
         } else if (version338){
             GSWorkspaceLayout.prototype._createBestLayout = function (area){
-                let prev = Lang.bind(this, prevCreateBestLayout);
+                let prev = prevCreateBestLayout.bind(this);
                 if (!extension.enabled) return prev(area);
                 
                 if (!this._shellTileOverviewModifier)
@@ -497,7 +496,7 @@ var OverviewModifier = class OverviewModifier{
             }
             
             GSWorkspaceLayout.prototype._getWindowSlots = function (area){
-                let prev = Lang.bind(this, prevGetWindowSlots);
+                let prev = prevGetWindowSlots.bind(this);
                 if (!extension.enabled) return prev(area);
                 return this._shellTileOverviewModifier.getWindowSlots.bind(this)(area, prev);
             }

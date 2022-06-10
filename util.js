@@ -24,7 +24,7 @@ function versionCompare(first, second){
 }
 
 
-class _Compatibility{
+var Compatibility = class Compatibility{
     constructor(){
         let _wsmgr = global.workspace_manager;
         let _screen = global.screen;
@@ -50,5 +50,3 @@ class _Compatibility{
         return this._display || this._screen.get_display();
     }
 }
-
-var Compatibility = new _Compatibility();

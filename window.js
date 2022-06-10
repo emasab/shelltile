@@ -1,5 +1,4 @@
 const Main = imports.ui.main;
-const Lang = imports.lang;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
 const Mainloop = imports.mainloop;

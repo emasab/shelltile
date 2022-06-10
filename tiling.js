@@ -2,7 +2,6 @@ const Meta = imports.gi.Meta;
 const St = imports.gi.St;
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
-const Lang = imports.lang;
 const Clutter = imports.gi.Clutter;
 const Tweener = imports.tweener && imports.tweener.tweener || imports.ui.tweener;
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -10,7 +9,6 @@ const Extension = ExtensionUtils.getCurrentExtension();
 const Log = Extension.imports.logger.Logger.getLogger("ShellTile");
 const Window = Extension.imports.window.Window;
 const FakeWindow = Extension.imports.fakewindow.FakeWindow;
-const Compatibility = Extension.imports.util.Compatibility;
 const Gdk = imports.gi.Gdk
 const Config = imports.misc.config;
 const Util = Extension.imports.util;
@@ -18,9 +16,10 @@ var version310 = Util.versionCompare(Config.PACKAGE_VERSION, "3.9") >= 0;
 
 var WindowGroup = class WindowGroup{
 
-    constructor(first, second, type, splitPercent){
+    constructor(first, second, type, splitPercent, extension){
         if (!splitPercent) splitPercent = 0.5;
 
+        this.extension = extension;
         this.first = first;
         this.second = second;
         this.type = type
@@ -735,8 +734,7 @@ var WindowGroup = class WindowGroup{
             var second = new FakeWindow(this.extension, this.second.has_real_window() ? this.second : undefined);
         } else var second = await this.second.clone(cursor);
 
-        var ret = new WindowGroup(first, second, this.type, this.splitPercent);
-        ret.extension = this.extension;
+        var ret = new WindowGroup(first, second, this.type, this.splitPercent, this.extension);
         await ret.attach(undefined, undefined, cursor);
         return ret;
     }
@@ -759,6 +757,7 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
         });
         this.preview_for_edge_tiling = false;
         this.preview.visible = false;
+        this._compatibility = this.extension.compatibility;
         Main.uiGroup.add_actor(this.preview);
     }
 
@@ -932,7 +931,7 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
     }
 
     async on_accelerator (accel){
-        var meta_window = Compatibility.get_display().focus_window;
+        var meta_window = this._compatibility.get_display().focus_window;
         if(accel) accel = accel.slice(5);
         if (!meta_window) return;
 
@@ -1282,9 +1281,7 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
             } else {
                 var perc = 0.5;
             }
-            var ret = new WindowGroup(vars[group[0]], vars[group[1]], vars[group[2]], perc);
-            ret.extension = this.extension;
-            return ret;
+            return new WindowGroup(vars[group[0]], vars[group[1]], vars[group[2]], perc, this.extension);
         }
     }
 
@@ -1498,8 +1495,7 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
                         var second = top_group;
                     }
 
-                    newgroup = new WindowGroup(first, second, new_type, other_side.splitPercent);
-                    newgroup.extension = this.extension;
+                    newgroup = new WindowGroup(first, second, new_type, other_side.splitPercent, this.extension);
                     await newgroup.attach(undefined, undefined, true);
 
                 } else if (rotate_half_screen){
@@ -1531,8 +1527,7 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
                     else if (top_window_under_second) await top_window_under.detach(top_window_under_second, true);
                     await top_group.detach(other_side, true);
 
-                    var newgroup_other_side = new WindowGroup(newgroup_other_side_first, newgroup_other_side_second, top_group_type, top_group_splitPercent);
-                    newgroup_other_side.extension = this.extension;
+                    var newgroup_other_side = new WindowGroup(newgroup_other_side_first, newgroup_other_side_second, top_group_type, top_group_splitPercent, this.extension);
                     await newgroup_other_side.attach(undefined, undefined, true);
 
                     var window_one = window_under;
@@ -1541,8 +1536,7 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
                     var second = first === window_one ? window_two : window_one;
                     var new_type = top_group_type == WindowGroup.HORIZONTAL_GROUP ? WindowGroup.VERTICAL_GROUP : WindowGroup.HORIZONTAL_GROUP;
 
-                    newgroup = new WindowGroup(first, second, new_type, top_window_under_splitPercent || other_side_splitPercent);
-                    newgroup.extension = this.extension;
+                    newgroup = new WindowGroup(first, second, new_type, top_window_under_splitPercent || other_side_splitPercent, this.extension);
                     await newgroup.attach(undefined, undefined, true);
 
                 }
@@ -1566,8 +1560,7 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
                     new_type = WindowGroup.VERTICAL_GROUP;
                 }
 
-                newgroup = new WindowGroup(first, second, new_type, splitPercent);
-                newgroup.extension = this.extension;
+                newgroup = new WindowGroup(first, second, new_type, splitPercent, this.extension);
                 await newgroup.attach(win, undefined, true);
 
             } else if (window_under.group &&
@@ -1581,8 +1574,7 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
                 var first = window_under.group.first === window_under ? win : window_under.group.first;
                 var second = first === win ? window_under.group.second : win;
 
-                newgroup = new WindowGroup(first, second, window_under.group.type, window_under.group.splitPercent);
-                newgroup.extension = this.extension;
+                newgroup = new WindowGroup(first, second, window_under.group.type, window_under.group.splitPercent, this.extension);
                 await newgroup.attach(win, true, true);
 
             }
@@ -1622,8 +1614,7 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
                 position.is_right = false;
             }
 
-            var group = new WindowGroup(first, second, group_type, perc);
-            group.extension = this.extension;
+            var group = new WindowGroup(first, second, group_type, perc, this.extension);
             await group.attach(win, undefined, true);
             win = group;
         }
@@ -1680,8 +1671,8 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
         }
 
         var cursor_rect = this.get_cursor_rect();
-        var monitor = Compatibility.get_screen().get_current_monitor();
-        var monitor_geometry = Compatibility.get_screen().get_monitor_geometry(monitor);
+        var monitor = this._compatibility.get_screen().get_current_monitor();
+        var monitor_geometry = this._compatibility.get_screen().get_monitor_geometry(monitor);
         var maxi = win.get_maximized_bounds(true);
         var ret = null;
         var edge_zone_width = this.extension.edge_zone_width;

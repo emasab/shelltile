@@ -1,21 +1,32 @@
 const Gtk = imports.gi.Gtk;
 const GObject = imports.gi.GObject;
-const Lang = imports.lang;
 
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
-const Convenience = Extension.imports.convenience;
+const ExtensionUtils = imports.misc.extensionUtils;
 const Gettext = imports.gettext.domain('shelltile');
 const _ = Gettext.gettext;
 
-const SCHEMA = "org.gnome.shell.extensions.shelltile";
-
-var gsettings;
-var settings;
-
 function init(){
-    Convenience.initTranslations();
+}
 
-    gsettings = Convenience.getSettings();
+function getAccelerators(){
+    return [
+        "tile-left",
+        "tile-right",
+        "tile-up",
+        "tile-down"
+    ]
+}
+
+function buildPrefsWidget(){
+    var gsettings;
+    if (ExtensionUtils){
+        ExtensionUtils.initTranslations();
+        gsettings = ExtensionUtils.getSettings();
+    } else {
+        Convenience.initTranslations();
+        gsettings = Convenience.getSettings();
+    }
 
     settings = {
         "enable-edge-tiling": {
@@ -73,19 +84,6 @@ function init(){
             label: _("Tile to the bottom edge")
         }
     };
-
-}
-
-function getAccelerators(){
-    return [
-        "tile-left",
-        "tile-right",
-        "tile-up",
-        "tile-down"
-    ]
-}
-
-function buildPrefsWidget(){
 
     let frame = new Gtk.Box({
         orientation: Gtk.Orientation.VERTICAL,
