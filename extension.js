@@ -19,6 +19,10 @@ const Compatibility = Extension.imports.util.Compatibility;
 class Ext{
     
     constructor(){
+        this._init_attributes();
+    }
+
+    _init_attributes(){
         this._log = undefined;
         this._gnome_shell_settings = undefined;
         this._gnome_mutter_settings = undefined;
@@ -39,6 +43,7 @@ class Ext{
         this.windows = {};
         this._shellwm = global.window_manager;
         this._shortcuts_binding_ids = [];
+        this._idle_callbacks = new Map();
     }
 
     get compatibility(){
@@ -199,7 +204,9 @@ class Ext{
     }
 
     on_remove_workspace (wm, index){
-        Mainloop.idle_add(() => {
+        const cb = () => {
+            this._idle_callbacks.delete(cb);
+            if (!this.enabled) return false;
             var removed_meta = null;
             var removed_ws = null;
             for (let k in this.workspaces){
@@ -221,7 +228,8 @@ class Ext{
                 this.remove_workspace(removed_meta);
             }
             return false;
-        });
+        }
+        this._idle_callbacks.set(cb, Mainloop.idle_add(cb));
     }
 
     remove_workspace (removed_meta){
@@ -277,6 +285,12 @@ class Ext{
         }
     }
 
+    _idle_remove_all(){
+        for(const idle_id of this._idle_callbacks.values()){
+            Mainloop.idle_remove(idle_id);
+        }
+    }
+
     disconnect_tracked_signals (owner, object){
         if (owner._bound_signals == null) return;
 
@@ -316,38 +330,35 @@ class Ext{
             this.load_settings();
             this.remove_default_keybindings();
 
-            if (!this.initialized){
-                this.initialized = true;
-                this._init_workspaces();
+            this._init_workspaces();
 
-                var on_window_maximize = this.break_loops(this.on_window_maximize);
-                var on_window_unmaximize = this.break_loops(this.on_window_unmaximize);
-                var on_window_minimize = this.break_loops(this.on_window_minimize);
-                var on_window_manager_window_size_change = this.break_loops(this.on_window_manager_window_size_change);
-                var on_window_entered_monitor = this.break_loops(this.window_entered_monitor);
-                var on_window_create = this.on_window_create;
-                
-                this.connect_and_track(this, this.gnome_shell_settings, 'changed', this.on_settings_changed.bind(this));
-                this.connect_and_track(this, this.gnome_mutter_settings, 'changed', this.on_settings_changed.bind(this));
-                this.connect_and_track(this, this.settings, 'changed', this.on_settings_changed.bind(this));
-                this.connect_and_track(this, this.screen, 'window-entered-monitor', on_window_entered_monitor.bind(this));
-                this.connect_and_track(this, this.display, 'window_created', on_window_create.bind(this));
+            var on_window_maximize = this.break_loops(this.on_window_maximize);
+            var on_window_unmaximize = this.break_loops(this.on_window_unmaximize);
+            var on_window_minimize = this.break_loops(this.on_window_minimize);
+            var on_window_manager_window_size_change = this.break_loops(this.on_window_manager_window_size_change);
+            var on_window_entered_monitor = this.break_loops(this.window_entered_monitor);
+            var on_window_create = this.on_window_create;
+            
+            this.connect_and_track(this, this.gnome_shell_settings, 'changed', this.on_settings_changed.bind(this));
+            this.connect_and_track(this, this.gnome_mutter_settings, 'changed', this.on_settings_changed.bind(this));
+            this.connect_and_track(this, this.settings, 'changed', this.on_settings_changed.bind(this));
+            this.connect_and_track(this, this.screen, 'window-entered-monitor', on_window_entered_monitor.bind(this));
+            this.connect_and_track(this, this.display, 'window_created', on_window_create.bind(this));
 
-                if (Util.versionCompare(undefined, "3.18") >= 0){
-                    this.connect_and_track(this, this._shellwm, 'size-change', on_window_manager_window_size_change.bind(this));
-                    this.connect_and_track(this, this._shellwm, 'minimize', on_window_minimize.bind(this));
-                } else {
-                    this.connect_and_track(this, this._shellwm, 'maximize', on_window_maximize.bind(this));
-                    this.connect_and_track(this, this._shellwm, 'unmaximize', on_window_unmaximize.bind(this));
-                    this.connect_and_track(this, this._shellwm, 'minimize', on_window_minimize.bind(this));
-                }
-
-                if(this.enable_keybindings){
-                    this.bind_shortcuts();
-                }
-
-                OverviewModifier.register(this);
+            if (Util.versionCompare(undefined, "3.18") >= 0){
+                this.connect_and_track(this, this._shellwm, 'size-change', on_window_manager_window_size_change.bind(this));
+                this.connect_and_track(this, this._shellwm, 'minimize', on_window_minimize.bind(this));
+            } else {
+                this.connect_and_track(this, this._shellwm, 'maximize', on_window_maximize.bind(this));
+                this.connect_and_track(this, this._shellwm, 'unmaximize', on_window_unmaximize.bind(this));
+                this.connect_and_track(this, this._shellwm, 'minimize', on_window_minimize.bind(this));
             }
+
+            if(this.enable_keybindings){
+                this.bind_shortcuts();
+            }
+
+            OverviewModifier.register(this);
             //if(this.log.is_debug()) this.log.debug("ShellTile enabled");
 
         } catch (e){
@@ -398,10 +409,13 @@ class Ext{
         let actor = meta_window.get_compositor_private();
         if (!actor){
             if (!second_try){
-                Mainloop.idle_add(() => {
+                const cb = () => {
+                    this._idle_callbacks.delete(cb);
+                    if (!this.enabled) return false;
                     this.on_window_create(display, meta_window, true);
                     return false;
-                });
+                }
+                this._idle_callbacks.set(cb, Mainloop.idle_add(cb));
             }
             return;
         }
@@ -424,7 +438,9 @@ class Ext{
         if(win.marked_for_remove) return;
         win.marked_for_remove = true;
 
-        Mainloop.idle_add(() => {
+        const cb = () => {
+            this._idle_callbacks.delete(cb);
+            if (!this.enabled) return false;
             if (win.marked_for_remove){
                 if (this.strategy && this.strategy.on_window_remove){
                     this.strategy.on_window_remove(win).then(()=>{
@@ -434,7 +450,8 @@ class Ext{
                 }
             }
             return false;
-        });
+        };
+        this._idle_callbacks.set(cb, Mainloop.idle_add(cb));
         //if(this.log.is_debug()) this.log.debug("window removed " + win);
     }
 
@@ -584,7 +601,6 @@ class Ext{
     }
 
     bind_to_window_change (win, actor){
-
         var requested_win_id = Window.get_id(win.meta_window);
             
         var catch_errors = async (cb, win) => {
@@ -700,13 +716,18 @@ class Ext{
 
     disable (){
         try {
-            this.enabled = false;
+            OverviewModifier.unregister(this);
+            this.unbind_shortcuts();
+            this._disconnect_workspaces();
+            this.disconnect_tracked_signals(this);
+            this._idle_remove_all();
             this.gnome_shell_settings.reset("edge-tiling");
             this.gnome_mutter_settings.reset("edge-tiling");
-            this.unbind_shortcuts();
+            this._init_attributes();
             //if(this.log.is_debug()) this.log.debug("ShellTile disabled");
 
         } catch (e){
+            this.log.error(e);
             if (this.log.is_error()) this.log.error(e);
         }
     }

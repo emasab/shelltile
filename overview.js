@@ -448,8 +448,6 @@ class OverviewModifier338 extends OverviewModifierBase{
 
 var OverviewModifier = class OverviewModifier{
     static register(extension){
-        if (OverviewModifier._registered) return;
-
         let prevComputeAllWindowSlots = GSWorkspace && GSWorkspace.prototype._computeAllWindowSlots;
         let prevComputeLayout = GSWorkspace && GSWorkspace.prototype._computeLayout;
         let prevCreateBestLayout = GSWorkspaceLayout && GSWorkspaceLayout.prototype._createBestLayout;
@@ -463,16 +461,24 @@ var OverviewModifier = class OverviewModifier{
         
         let version338 = Util.versionCompare(Config.PACKAGE_VERSION, "3.38") >= 0;
         version338 = version338 && prevCreateBestLayout && prevGetWindowSlots;
-        
-    
+
+        let restore;
+        OverviewModifier._gsWorkspaceInstances = [];
+
         if (version38){
     
             GSWorkspace.prototype._computeAllWindowSlots = function (windows){
                 var prev = prevComputeAllWindowSlots.bind(this);
                 if (!extension.enabled) return prev(windows);
     
-                this._shellTileOverviewModifier = new OverviewModifier38(extension);
+                if (!this._shellTileOverviewModifier){
+                    this._shellTileOverviewModifier = new OverviewModifier38(extension);
+                    OverviewModifier._gsWorkspaceInstances.push(this);
+                }
                 return this._shellTileOverviewModifier.computeWindowSlots(windows, prev);
+            }
+            restore = () => {
+                GSWorkspace.prototype._computeAllWindowSlots = prevComputeAllWindowSlots;
             }
     
         } else if (version310){
@@ -481,8 +487,14 @@ var OverviewModifier = class OverviewModifier{
                 var prev = prevComputeLayout.bind(this);
                 if (!extension.enabled) return prev(windows);
     
-                this._shellTileOverviewModifier = new OverviewModifier310(extension);
+                if (!this._shellTileOverviewModifier){
+                    this._shellTileOverviewModifier = new OverviewModifier310(extension);
+                    OverviewModifier._gsWorkspaceInstances.push(this);
+                }
                 return this._shellTileOverviewModifier.computeLayout(windows, prev);
+            }
+            restore = () => {
+                GSWorkspace.prototype._computeLayout = prevComputeLayout;
             }
     
         } else if (version338){
@@ -490,8 +502,10 @@ var OverviewModifier = class OverviewModifier{
                 let prev = prevCreateBestLayout.bind(this);
                 if (!extension.enabled) return prev(area);
                 
-                if (!this._shellTileOverviewModifier)
-                	this._shellTileOverviewModifier = new OverviewModifier338(extension);
+                if (!this._shellTileOverviewModifier){
+                    this._shellTileOverviewModifier = new OverviewModifier338(extension);
+                    OverviewModifier._gsWorkspaceInstances.push(this);
+                }
                 return this._shellTileOverviewModifier.createBestLayout.bind(this)(area, prev);
             }
             
@@ -500,8 +514,21 @@ var OverviewModifier = class OverviewModifier{
                 if (!extension.enabled) return prev(area);
                 return this._shellTileOverviewModifier.getWindowSlots.bind(this)(area, prev);
             }
+            restore = () => {
+                GSWorkspace.prototype._createBestLayout = prevCreateBestLayout;
+                GSWorkspace.prototype._getWindowSlots = prevGetWindowSlots;
+            }
         }
-    
-        OverviewModifier._registered = true;
+
+        OverviewModifier._restore = () => {
+            OverviewModifier._gsWorkspaceInstances.forEach((inst) => {
+                delete inst._shellTileOverviewModifier;
+            });
+            restore();
+        }
+    }
+
+    static unregister(extension){
+        if (OverviewModifier._restore)  OverviewModifier._restore();
     }
 }
