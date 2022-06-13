@@ -23,27 +23,23 @@ class Ext{
     }
 
     _init_attributes(){
-        this._log = undefined;
-        this._gnome_shell_settings = undefined;
-        this._gnome_mutter_settings = undefined;
-        this._settings = undefined;
-        this._strategy = undefined;
-        this._compatibility = undefined;
-        this.__wsmgr = undefined;
+        this._log = null;
+        this._gnome_shell_settings = null;
+        this._gnome_mutter_settings = null;
+        this._settings = null;
+        this._strategy = null;
+        this._compatibility = null;
+        this.__wsmgr = null;
     
-        this.enable_keybindings = undefined;
-        this.tile_left_accel = undefined;
-        this.tile_right_accel = undefined;
-        this.tile_top_accel = undefined;
-        this.tile_bottom_accel = undefined;
+        this.enable_keybindings = null;
         this.enabled = false;
         this.calling = false;
     
-        this.workspaces = {};
-        this.windows = {};
-        this._shellwm = global.window_manager;
-        this._shortcuts_binding_ids = [];
-        this._idle_callbacks = new Map();
+        this._workspaces = null;
+        this._windows = null;
+        this.__shortcuts_binding_ids = null;
+        this.__idle_callbacks = null;
+        this.__timeout_callbacks = null;
     }
 
     get compatibility(){
@@ -58,6 +54,41 @@ class Ext{
             this.__wsmgr = this.compatibility.get_workspace_manager();
         }
         return this.__wsmgr;
+    }
+
+    get _shortcuts_binding_ids(){
+        if (!this.__shortcuts_binding_ids){
+            this.__shortcuts_binding_ids = [];
+        }
+        return this.__shortcuts_binding_ids;
+    }
+
+    get _idle_callbacks(){
+        if (!this.__idle_callbacks){
+            this.__idle_callbacks = new Map();
+        }
+        return this.__idle_callbacks;
+    }
+
+    get _timeout_callbacks(){
+        if (!this.__timeout_callbacks){
+            this.__timeout_callbacks = new Map();
+        }
+        return this.__timeout_callbacks;
+    }
+
+    get workspaces(){
+        if (!this._workspaces){
+            this._workspaces = {};
+        }
+        return this._workspaces;
+    }
+
+    get windows(){
+        if (!this._windows){
+            this._windows = {};
+        }
+        return this._windows;
     }
 
     get gnome_shell_settings(){
@@ -291,6 +322,37 @@ class Ext{
         }
     }
 
+    _timeout_remove_all(){
+        for(const event_source_id of this._timeout_callbacks.values()){
+            Mainloop.source_remove(event_source_id);
+        }
+    }
+
+    timeout_add(timeout, cb){
+        const event_source_id = Mainloop.timeout_add(timeout, () => {
+            let ret = undefined;
+            try {
+                ret = cb();
+                return ret;
+            } finally {
+                if (ret === false){
+                    this._timeout_callbacks.delete(cb);
+                }
+            } 
+        });
+        this._timeout_callbacks.set(cb, event_source_id);
+        return event_source_id;
+    }
+
+    timeout_cancel(event_source_id){
+        for(const [cb, current_event_source_id] of this._timeout_callbacks.entries()){
+            if (current_event_source_id === event_source_id){
+                Mainloop.source_remove(event_source_id);
+                this._timeout_callbacks.delete(cb);
+            }
+        }
+    }
+
     disconnect_tracked_signals (owner, object){
         if (owner._bound_signals == null) return;
 
@@ -346,12 +408,12 @@ class Ext{
             this.connect_and_track(this, this.display, 'window_created', on_window_create.bind(this));
 
             if (Util.versionCompare(undefined, "3.18") >= 0){
-                this.connect_and_track(this, this._shellwm, 'size-change', on_window_manager_window_size_change.bind(this));
-                this.connect_and_track(this, this._shellwm, 'minimize', on_window_minimize.bind(this));
+                this.connect_and_track(this, global.window_manager, 'size-change', on_window_manager_window_size_change.bind(this));
+                this.connect_and_track(this, global.window_manager, 'minimize', on_window_minimize.bind(this));
             } else {
-                this.connect_and_track(this, this._shellwm, 'maximize', on_window_maximize.bind(this));
-                this.connect_and_track(this, this._shellwm, 'unmaximize', on_window_unmaximize.bind(this));
-                this.connect_and_track(this, this._shellwm, 'minimize', on_window_minimize.bind(this));
+                this.connect_and_track(this, global.window_manager, 'maximize', on_window_maximize.bind(this));
+                this.connect_and_track(this, global.window_manager, 'unmaximize', on_window_unmaximize.bind(this));
+                this.connect_and_track(this, global.window_manager, 'minimize', on_window_minimize.bind(this));
             }
 
             if(this.enable_keybindings){
@@ -382,7 +444,6 @@ class Ext{
         this._shortcuts_binding_ids.forEach(
             (id) => Main.wm.removeKeybinding(id)
         );
-        this._shortcuts_binding_ids = [];
     }
 
     bind_shortcut (name, cb){
@@ -616,7 +677,7 @@ class Ext{
 
         return (relevant_grabs, cb, cb_final) => {
             var active = false;
-            var grab_begin = async function (display, screen, window, grab_op){
+            var grab_begin = async (display, screen, window, grab_op) => {
                 if(!window) return;
                 var win_id = Window.get_id(window);
                 if(requested_win_id!=win_id) return;
@@ -631,11 +692,14 @@ class Ext{
                         await catch_errors(cb_final, win);
                     }
                     if (active){
-                        await new Promise((resolve) => Mainloop.timeout_add(200, resolve));
+                        await new Promise((resolve) => this.timeout_add(200, () => {
+                            resolve();
+                            return false;
+                        }));
                     }
                 }
             }
-            var grab_end = async function (display, screen, window, grab_op){
+            var grab_end = async (display, screen, window, grab_op) => {
                 if(!window) return;
                 var win_id = Window.get_id(window); 
                 if(requested_win_id!=win_id) return;
@@ -646,8 +710,8 @@ class Ext{
             }
 
 
-            this.connect_and_track(this, win, 'grab-op-begin', grab_begin.bind(this), this.display);
-            this.connect_and_track(this, win, 'grab-op-end', grab_end.bind(this), this.display);
+            this.connect_and_track(this, win, 'grab-op-begin', grab_begin, this.display);
+            this.connect_and_track(this, win, 'grab-op-end', grab_end, this.display);
         };
     }
 
@@ -721,6 +785,7 @@ class Ext{
             this._disconnect_workspaces();
             this.disconnect_tracked_signals(this);
             this._idle_remove_all();
+            this._timeout_remove_all();
             this.gnome_shell_settings.reset("edge-tiling");
             this.gnome_mutter_settings.reset("edge-tiling");
             this._init_attributes();

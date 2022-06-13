@@ -821,8 +821,9 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
         if(this.lastTime && (currTime - this.lastTime) < interval){
             var remaining = this.lastTime + interval - currTime + 10;
             await new Promise(resolve => {
-                me.__timeout = Mainloop.timeout_add(remaining, function (){
+                me.__timeout = this.extension.timeout_add(remaining, function (){
                     resolve();
+                    return false;
                 });
             });
             if(!me.__timeout) return;
@@ -936,16 +937,16 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
         if (!meta_window) return;
 
         var me = this;
-        var hasLastCode = !!me.lastCode;
+        var hasLastCode = !!this.lastCode;
         var win = this.extension.get_window(meta_window, true);
         var position = this.get_accelerator_position(accel);
         var preview_rect = await this.get_edge_preview(win, position);
 
-        var apply = async function (preview_rect, position){
-            await me.detach_window(win);
+        var apply = async (preview_rect, position) => {
+            await this.detach_window(win);
             await win.unmaximize();
-            if(me.extension.grouping_edge_tiling){
-                await me.get_edge_tiling(win, position, false);
+            if(this.extension.grouping_edge_tiling){
+                await this.get_edge_tiling(win, position, false);
             } else {
                 await win.move_resize(preview_rect.x, preview_rect.y, preview_rect.width, preview_rect.height);
             }
@@ -953,21 +954,20 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
 
         if (preview_rect){
 
-            if (!me.__accelerator_timeout){
+            if (!this.__accelerator_timeout){
 
-                me.__accelerator_timeout = Mainloop.timeout_add(DefaultTilingStrategy.ACCELERATOR_TIMEOUT + 10, function (){
-                    if (!me.__accelerator_timeout) return;
+                this.__accelerator_timeout = this.extension.timeout_add(DefaultTilingStrategy.ACCELERATOR_TIMEOUT + 10, () => {
+                    if (!this.__accelerator_timeout) return false;
                     apply(preview_rect, position);
-                    Mainloop.source_remove(me.__accelerator_timeout);
-                    delete me.__accelerator_timeout;
+                    delete this.__accelerator_timeout;
+                    return false;
                 });
 
             } else if (hasLastCode){
 
-                Mainloop.source_remove(me.__accelerator_timeout);
+                this.extension.timeout_cancel(this.__accelerator_timeout);
                 delete me.__accelerator_timeout;
                 apply(preview_rect, position);
-
             }
 
         }
@@ -1023,9 +1023,10 @@ var DefaultTilingStrategy = class DefaultTilingStrategy{
         //     if(!this.__timeout){
         //         var me = this;
         //         var remaining = this.lastTime + 200 - currTime + 10;
-        //         me.__timeout = Mainloop.timeout_add(remaining, function(){
+        //         me.__timeout = this.extension.timeout_add(remaining, () => {
         //             me.on_window_resize(win);
         //             delete me.__timeout;
+        //             return false;
         //         });
         //     }
         // }

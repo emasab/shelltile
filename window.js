@@ -153,7 +153,10 @@ var Window = class Window{
             Object.assign(tmp, {resolve: resolve, reject: reject});
         })
         Object.assign(ret, tmp);
-        Mainloop.timeout_add(timeout, ()=>ret.resolve());
+        this.extension.timeout_add(timeout, () => {
+            ret.resolve();
+            return false;
+        });
         return ret;
     }
 
