@@ -97,7 +97,7 @@ function buildPrefsWidget(){
 
     let hbox;
     for (setting in settings){
-        hbox = buildHbox(settings, setting);
+        hbox = buildHbox(gsettings, settings, setting);
         if(hbox) vbox.add(hbox);
     }
 
@@ -117,15 +117,15 @@ function buildPrefsWidget(){
 
 }
 
-function buildHbox(settings, setting){
+function buildHbox(gsettings, settings, setting){
     let hbox;
 
     if (settings[setting].type == "i")
-        hbox = createIntSetting(settings, setting);
+        hbox = createIntSetting(gsettings, settings, setting);
     if (settings[setting].type == "b")
-        hbox = createBoolSetting(settings, setting);
+        hbox = createBoolSetting(gsettings, settings, setting);
     if (settings[setting].type == "s")
-        hbox = createStringSetting(settings, setting);
+        hbox = createStringSetting(gsettings, settings, setting);
 
     return hbox;
 }
@@ -133,7 +133,7 @@ function buildHbox(settings, setting){
 /** Adapted from https://developer.gnome.org/gnome-devel-demos/stable/combobox.js.html.en#combobox
  * @author Eemil Lagerspetz
  */
-function createStringSetting(settings, setting){
+function createStringSetting(gsettings, settings, setting){
 
     let settingsV = settings[setting];
     let settingsId = setting;
@@ -203,20 +203,7 @@ function createStringSetting(settings, setting){
     return hbox;
 }
 
-function _tileKeySettingChanged(){
-    let _popUp = new Gtk.MessageDialog({
-        transient_for: this._window,
-        modal: true,
-        buttons: Gtk.ButtonsType.OK,
-        message_type: Gtk.MessageType.INFO,
-        text: this.tile_key_setting.get_active_text() + " index: " + this.tile_key_setting.get_active()
-    });
-    // Show the messagedialog
-    _popUp.show();
-    gsettings.set_string(settingsId, this.tile_key_setting.get_active_text());
-}
-
-function createBoolSetting(settings, setting){
+function createBoolSetting(gsettings, settings, setting){
 
     let settingsV = settings[setting];
     let settingsId = setting;
@@ -251,7 +238,7 @@ function createBoolSetting(settings, setting){
     return hbox;
 }
 
-function createIntSetting(settings, setting){
+function createIntSetting(gsettings, settings, setting){
 
     let settingsV = settings[setting];
     let settingsId = setting;
@@ -298,14 +285,14 @@ const COLUMN_DESCRIPTION = 1;
 const COLUMN_KEY         = 2;
 const COLUMN_MODS        = 3;
 
-function addKeybinding(model, settings, id, description){
+function addKeybinding(model, gsettings, id, description){
     // Get the current accelerator.
-    let accelerator = settings.get_strv(id)[0];
+    let accelerator = gsettings.get_strv(id)[0];
     let key, mods;
     if (accelerator == null)
         [key, mods] = [0, 0];
     else
-        [key, mods] = Gtk.accelerator_parse(settings.get_strv(id)[0]);
+        [key, mods] = Gtk.accelerator_parse(gsettings.get_strv(id)[0]);
 
     // Add a row for the keybinding.
     let row = model.insert(100); // Erm...
@@ -314,7 +301,7 @@ function addKeybinding(model, settings, id, description){
         [id,        description,        key,        mods]);
 }
 
-function createKeybindingWidget(settings){
+function createKeybindingWidget(gsettings){
     let model = new Gtk.ListStore();
 
     model.set_column_types(
@@ -356,7 +343,7 @@ function createKeybindingWidget(settings){
             // Update the stored setting.
             let id = model.get_value(iter, COLUMN_ID);
             let accelString = Gtk.accelerator_name(key, mods);
-            settings.set_strv(id, [accelString]);
+            gsettings.set_strv(id, [accelString]);
         });
 
     renderer.connect("accel-cleared",
@@ -370,7 +357,7 @@ function createKeybindingWidget(settings){
 
             // Update the stored setting.
             let id = model.get_value(iter, COLUMN_ID);
-            settings.set_strv(id, []);
+            gsettings.set_strv(id, []);
         });
 
     column = new Gtk.TreeViewColumn();
