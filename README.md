@@ -32,3 +32,12 @@ Default keyboard accelerators that can be joined for quarter tiling:
 
 https://www.youtube.com/watch?v=xX9HUBFj5XE
 thanks to WOGUE
+
+## Notes.
+### Ubuntu 18.04
+Ubuntu 18.04 comes with a basic tiling behavior, so you will have problems using both at the same time.
+The faster workaround is to disable the default one:
+```
+dconf write /org/gnome/mutter/edge-tiling false
+dconf write /org/gnome/shell/overrides/edge-tiling false
+```
