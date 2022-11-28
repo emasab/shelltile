@@ -6,6 +6,10 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Gettext = imports.gettext.domain('shelltile');
 const _ = Gettext.gettext;
 
+const Config = imports.misc.config;
+
+const shellMajorVersion = parseInt(Config.PACKAGE_VERSION.split('.')[0]);
+
 function init(){
 }
 
@@ -85,10 +89,18 @@ function buildPrefsWidget(){
         }
     };
 
-    let frame = new Gtk.Box({
-        orientation: Gtk.Orientation.VERTICAL,
-        border_width: 10
-    });
+    const options = {}
+    if (shellMajorVersion < 40) {
+        options.orientation = Gtk.Orientation.VERTICAL;
+        options.border_width = 10;
+    } else {
+        options.margin_top = 10;
+        options.margin_bottom = 10;
+        options.margin_start = 10;
+        options.margin_end = 10;
+    }
+    let frame = new Gtk.Box(options);
+
     let vbox = new Gtk.Box({
         orientation: Gtk.Orientation.VERTICAL,
         margin: 20,
